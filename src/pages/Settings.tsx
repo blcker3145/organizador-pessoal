@@ -6,6 +6,7 @@ import { CommitInput } from "../components/common";
 import { MODULES } from "../components/Sidebar";
 import { clearAll, deleteCategory, deleteProject, insert, patch, remove, replaceState, resetToSeed, setState, STATE_VERSION, useApp } from "../lib/store";
 import type { AppState, TxKind } from "../lib/types";
+import { legacyData, mergeLegacyIntoAccount } from "../lib/sync";
 import { ui } from "../lib/ui";
 import { cx, moneyPlain, parseMoney, uid } from "../lib/util";
 
@@ -193,6 +194,29 @@ export function SettingsPage() {
           <button className="btn" onClick={exportData}>
             Exportar backup (.json)
           </button>
+          {legacyData() && (
+            <button
+              className="btn"
+              onClick={async () => {
+                const legacy = legacyData();
+                const summary = legacy
+                  ? [legacy.videos.length && `${legacy.videos.length} vídeo(s)`, legacy.notes.length && `${legacy.notes.length} nota(s)`, legacy.tasks.length && `${legacy.tasks.length} tarefa(s)`, legacy.transactions.length && `${legacy.transactions.length} lançamento(s)`]
+                      .filter(Boolean)
+                      .join(", ")
+                  : "";
+                const ok = await ui.confirm({
+                  title: "Trazer os dados antigos deste navegador?",
+                  message: `Encontramos dados de antes do login (${summary || "itens diversos"}). Eles serão adicionados à sua conta sem apagar nada do que já está nela.`,
+                  confirmLabel: "Trazer para a conta",
+                });
+                if (!ok) return;
+                const added = mergeLegacyIntoAccount();
+                ui.toast(added ? `${added} item(ns) antigo(s) adicionado(s) à sua conta` : "Esses dados já estavam na sua conta");
+              }}
+            >
+              Trazer dados antigos deste navegador
+            </button>
+          )}
           <button className="btn" onClick={() => fileRef.current?.click()}>
             Importar backup
           </button>

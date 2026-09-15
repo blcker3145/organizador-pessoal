@@ -42,20 +42,30 @@ Em **Authentication → Sign In / Providers → Email**, o login por e-mail já 
 4. Clique em **Deploy function**.
 5. Deixe ligada a opção **Verify JWT** (ou *Enforce JWT verification*). É ela que exige login.
 
-## 5. Guardar a chave da OpenAI (segredo)
+## 5. Guardar a chave da IA (segredo)
 
-1. Em https://platform.openai.com/api-keys, **apague a chave antiga** (a que foi enviada no chat) e crie uma nova.
-2. No Supabase, abra **Edge Functions → Secrets** e adicione:
+Escolha **um** provedor:
+
+| Provedor | Custo | Onde criar a chave | Nome do segredo |
+|---|---|---|---|
+| Google Gemini | cota gratuita diária (com limites) | https://aistudio.google.com/apikey → Create API key (começa com `AQ.` ou `AIza`) | `GEMINI_API_KEY` |
+| OpenAI (ChatGPT) | pago por uso, precisa de crédito | https://platform.openai.com/api-keys (começa com `sk-`) | `OPENAI_API_KEY` |
+
+1. Crie a chave no site do provedor. **Nunca mande a chave por chat ou e-mail**; se isso acontecer, apague e crie outra.
+2. No Supabase, abra **Edge Functions → Secrets** e adicione o segredo com o nome da tabela e a chave como valor.
+3. Opcionais:
 
 | Name | Value |
 |---|---|
-| `OPENAI_API_KEY` | a chave nova da OpenAI |
-| `AI_DAILY_LIMIT` | `50` (pedidos por pessoa por dia; opcional) |
-| `OPENAI_MODEL` | opcional, ex.: `gpt-4o-mini`. Se não colocar, a função escolhe sozinha |
+| `AI_DAILY_LIMIT` | pedidos por pessoa por dia (padrão `50`) |
+| `GEMINI_MODEL` / `OPENAI_MODEL` | força um modelo; sem isso a função escolhe sozinha |
+| `AI_PROVIDER` | `gemini` ou `openai`, se os dois segredos existirem |
 
-3. Clique em **Save**.
+4. Clique em **Save**. Não precisa publicar a função de novo.
 
 A chave fica só aqui. Ela nunca vai para o navegador, o código ou o GitHub.
+
+No plano gratuito do Gemini, o Google pode usar o conteúdo enviado para melhorar os produtos dele. Evite mandar dados sensíveis para a IA, ou ative o faturamento no Google AI Studio.
 
 ## 6. Conectar o app ao projeto
 
@@ -86,7 +96,8 @@ Essas duas informações são públicas por natureza e podem aparecer no site. Q
 | "Falta conectar o Supabase" | Confira o `.env.local` e rode `npm run dev` de novo |
 | "Não foi possível carregar seus dados" | O SQL do passo 2 não foi aplicado |
 | "A função ai ainda não foi publicada" | Refaça o passo 4 com o nome `ai`. Se o painel criou outro endereço (ex.: `smart-task`), coloque `VITE_SUPABASE_AI_FUNCTION=smart-task` no `.env.local` |
-| "falta o segredo OPENAI_API_KEY" | Refaça o passo 5 |
+| "adicione o segredo GEMINI_API_KEY ou OPENAI_API_KEY" | Refaça o passo 5 |
+| "A cota gratuita do Gemini acabou" | Espere um minuto; se continuar, a cota diária renova no dia seguinte |
 | "A conta da OpenAI está sem créditos" | Adicione saldo em platform.openai.com → Billing |
 | Link do e-mail volta para a página errada | Confira as URLs do passo 3 |
 | "Esse link expirou ou já foi usado" | Peça um novo e abra no mesmo navegador em que pediu |

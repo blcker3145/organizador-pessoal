@@ -25,9 +25,9 @@ const BLOCK_MENU: { type: BlockType; label: string; hint: string; keys: string }
   { type: "divider", label: "Divisor", hint: "---", keys: "divisor linha divider" },
 ];
 
-const AI_KEYS = "ia ai chatgpt gpt inteligencia artificial";
+const AI_KEYS = "ia ai chatgpt gpt gemini inteligencia artificial";
 const MENU: MenuItem[] = [
-  { kind: "ai", id: "ai-pedir", label: "IA: pedir algo…", hint: "ChatGPT", keys: `${AI_KEYS} pedir perguntar escrever`, instruction: "" },
+  { kind: "ai", id: "ai-pedir", label: "IA: pedir algo…", hint: "IA", keys: `${AI_KEYS} pedir perguntar escrever`, instruction: "" },
   ...BLOCK_MENU.map((m) => ({ kind: "block" as const, ...m })),
   ...WRITING_ACTIONS.map((a) => ({ kind: "ai" as const, id: `ai-${a.id}`, label: `IA: ${a.label}`, hint: "", keys: `${AI_KEYS} ${a.label.toLowerCase()}`, instruction: a.instruction })),
 ];
@@ -439,7 +439,7 @@ export function BlockEditor({
                 const anchor = (caret.current && list.find((b) => b.id === caret.current!.id)) || list[list.length - 1];
                 openAi(anchor.id, "", null);
               }}
-              title="Escrever com IA (ChatGPT). Também dá para digitar / e escolher uma ação de IA."
+              title="Escrever com IA. Também dá para digitar / e escolher uma ação de IA."
             >
               <Sparkles size={14} /> IA
             </button>

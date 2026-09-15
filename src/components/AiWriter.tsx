@@ -1,6 +1,6 @@
 import { Check, Copy, CornerDownLeft, Loader2, RotateCcw, Sparkles, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { AiError, WRITING_ACTIONS, writeWithAi } from "../lib/ai";
+import { AiError, providerLabel, useAiProvider, WRITING_ACTIONS, writeWithAi } from "../lib/ai";
 import { ui } from "../lib/ui";
 import { cx } from "../lib/util";
 
@@ -34,7 +34,7 @@ export function useAiWriter(opts: { getText: () => string; context?: string; pla
       setHistory((h) => (refine ? [...h, { instruction, result }] : [{ instruction, result }]));
     } catch (e) {
       if (!alive.current) return;
-      setError(e instanceof AiError ? e.message : "Algo deu errado ao falar com a OpenAI. Tente de novo.");
+      setError(e instanceof AiError ? e.message : "Algo deu errado ao falar com a IA. Tente de novo.");
     } finally {
       if (alive.current) setLoading(false);
     }
@@ -80,6 +80,7 @@ export function AiPanel({
   onClose: () => void;
 }) {
   const writer = useAiWriter({ getText, context });
+  const provider = useAiProvider();
   const [instruction, setInstruction] = useState(initialInstruction);
   const [followUp, setFollowUp] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -101,9 +102,11 @@ export function AiPanel({
       <div className="ai-head">
         <Sparkles size={15} />
         <strong>Escrever com IA</strong>
-        <span className="muted" style={{ fontSize: 12 }}>
-          ChatGPT
-        </span>
+        {provider && (
+          <span className="muted" style={{ fontSize: 12 }}>
+            {providerLabel(provider)}
+          </span>
+        )}
         <span className="grow" />
         {blockPreview && (
           <span className="row" style={{ gap: 4 }}>
@@ -200,7 +203,7 @@ export function AiPanel({
             </>
           )}
           <div className="muted" style={{ fontSize: 11.5 }}>
-            O texto é enviado para a OpenAI para gerar a resposta. Confira antes de publicar.
+            O texto é enviado ao provedor de IA ({providerLabel(provider)}) para gerar a resposta. Confira antes de publicar.
           </div>
         </>
     </div>

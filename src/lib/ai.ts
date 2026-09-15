@@ -1,6 +1,6 @@
 /*
- * IA (ChatGPT) pelo servidor: o app chama a função "ai" do Supabase com o login
- * da pessoa, e só o servidor conhece a chave da OpenAI.
+ * IA pelo servidor: o app chama a função de IA do Supabase com o login da pessoa,
+ * e só o servidor conhece a chave do provedor (Google Gemini ou OpenAI).
  */
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { createStore } from "./createStore";
@@ -19,6 +19,18 @@ export interface AiUsage {
 export const aiUsageStore = createStore<AiUsage | null>(null);
 export const useAiUsage = aiUsageStore.use;
 
+export type AiProvider = "gemini" | "openai";
+
+/** Provedor em uso no servidor, informado nas respostas. */
+export const aiProviderStore = createStore<AiProvider | null>(null);
+export const useAiProvider = aiProviderStore.use;
+
+export function providerLabel(provider: AiProvider | null): string {
+  if (provider === "gemini") return "Google Gemini";
+  if (provider === "openai") return "ChatGPT";
+  return "IA";
+}
+
 /** Endereço (slug) da função no Supabase; o padrão é "ai". */
 const AI_FUNCTION = (import.meta.env.VITE_SUPABASE_AI_FUNCTION as string | undefined)?.trim() || "ai";
 
@@ -31,6 +43,7 @@ async function callAi<T>(body: Record<string, unknown>): Promise<T> {
       try {
         const payload = await error.context.json();
         if (payload?.usage) aiUsageStore.set(payload.usage);
+        if (payload?.provider) aiProviderStore.set(payload.provider);
         message = payload?.error || "";
         if (!message && error.context.status === 404) message = `A função "${AI_FUNCTION}" ainda não foi publicada no Supabase.`;
       } catch {
@@ -45,6 +58,7 @@ async function callAi<T>(body: Record<string, unknown>): Promise<T> {
     throw new AiError(message);
   }
   if (data?.usage) aiUsageStore.set(data.usage);
+  if (data?.provider) aiProviderStore.set(data.provider);
   return data as T;
 }
 

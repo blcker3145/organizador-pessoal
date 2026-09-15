@@ -245,7 +245,7 @@ function handleSession(event: string, session: Session | null) {
 export function startAuth() {
   if (started || !supabase) return;
   started = true;
-  // chave da OpenAI salva no navegador pela versão antiga: não é mais usada
+  // chave de IA salva no navegador pela versão antiga: não é mais usada
   try {
     localStorage.removeItem("organizador:openai");
   } catch {
@@ -327,4 +327,33 @@ export async function signOut() {
 export async function changePassword(password: string): Promise<string | null> {
   const { error } = await supabase!.auth.updateUser({ password });
   return error ? translateAuthError(error.message) : null;
+}
+
+/**
+ * Junta à conta os itens dos dados antigos deste navegador (antes do login)
+ * que ainda não existem nela. Não apaga nem altera nada que já está na conta.
+ * Retorna quantos itens foram adicionados.
+ */
+export function mergeLegacyIntoAccount(): number {
+  const legacy = legacyData();
+  if (!legacy || !hydrated) return 0;
+  const current = appStore.get();
+  const collections = ["tasks", "projects", "notes", "videos", "creatives", "habits", "routines", "categories", "transactions", "bills", "goals", "scriptTemplates"] as const;
+  let added = 0;
+  const next = { ...current } as AppState;
+  for (const key of collections) {
+    const have = new Set((current[key] as { id: string }[]).map((item) => item.id));
+    const extra = (legacy[key] as { id: string }[]).filter((item) => !have.has(item.id));
+    if (extra.length) {
+      (next[key] as { id: string }[]) = [...(current[key] as { id: string }[]), ...extra];
+      added += extra.length;
+    }
+  }
+  // registros de hábitos e rotina: só completa dias que a conta ainda não tem
+  const habitLogs = { ...current.habitLogs };
+  for (const [habitId, days] of Object.entries(legacy.habitLogs)) habitLogs[habitId] = { ...days, ...(habitLogs[habitId] || {}) };
+  const routineLogs = { ...current.routineLogs };
+  for (const [day, steps] of Object.entries(legacy.routineLogs)) routineLogs[day] = { ...steps, ...(routineLogs[day] || {}) };
+  appStore.set({ ...next, habitLogs, routineLogs });
+  return added;
 }

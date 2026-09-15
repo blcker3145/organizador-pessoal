@@ -4,3 +4,4 @@ backup-*.json
 .env.local
 .env
 supabase/.temp
+recuperado/

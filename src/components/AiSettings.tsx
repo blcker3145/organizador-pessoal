@@ -1,9 +1,10 @@
 import { useEffect } from "react";
-import { refreshAiUsage, useAiUsage } from "../lib/ai";
+import { providerLabel, refreshAiUsage, useAiProvider, useAiUsage } from "../lib/ai";
 import { ProgressBar } from "./common";
 
 export function AiSettingsSection() {
   const usage = useAiUsage();
+  const provider = useAiProvider();
 
   useEffect(() => {
     refreshAiUsage();
@@ -11,10 +12,10 @@ export function AiSettingsSection() {
 
   return (
     <section className="settings-section">
-      <h2>Inteligência artificial (ChatGPT)</h2>
+      <h2>Inteligência artificial</h2>
       <p>
-        Já vem incluída na sua conta. Use no assistente (Ctrl J), digitando "/" em um texto ou clicando em ✨. Você não precisa de chave: a conexão com a
-        OpenAI fica no servidor. O texto em que você usa a IA é enviado para a OpenAI.
+        Já vem incluída na sua conta. Use no assistente (Ctrl J), digitando "/" em um texto ou clicando em ✨. Você não precisa de chave: a conexão com o
+        provedor de IA{provider ? ` (${providerLabel(provider)})` : ""} fica no servidor, e o texto em que você usa a IA é enviado para ele.
       </p>
       {usage ? (
         <div className="stack" style={{ gap: 6, maxWidth: 420 }}>

@@ -1,6 +1,6 @@
 import { CheckSquare, Clapperboard, FileText, Loader2, Mic, Palette, Send, Sparkles, Trash2, Wallet, X, CheckCheck } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { AiError, type ChatMessage } from "../lib/ai";
+import { AiError, providerLabel, useAiProvider, type ChatMessage } from "../lib/ai";
 import { runAssistant, type CreatedItem } from "../lib/assistant";
 import { createStore } from "../lib/createStore";
 import { navigate, ui, useUI } from "../lib/ui";
@@ -61,6 +61,7 @@ export function AssistantDrawer() {
 
 function AssistantChat() {
   const { turns, api } = convoStore.use();
+  const provider = useAiProvider();
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
@@ -85,7 +86,7 @@ function AssistantChat() {
       const reply = (last && "content" in last && last.content) || (items.length ? "Pronto." : "Não consegui responder. Tente reformular.");
       convoStore.set({ api: messages, turns: [...convoStore.get().turns, { role: "assistant", text: reply, items }] });
     } catch (e) {
-      const msg = e instanceof AiError ? e.message : "Algo deu errado ao falar com a OpenAI. Tente de novo.";
+      const msg = e instanceof AiError ? e.message : "Algo deu errado ao falar com a IA. Tente de novo.";
       convoStore.set((s) => ({ ...s, turns: [...s.turns, { role: "assistant", text: msg, error: true }] }));
     } finally {
       setLoading(false);
@@ -108,9 +109,11 @@ function AssistantChat() {
       <div className="drawer-top">
         <Sparkles size={17} />
         <strong>Assistente IA</strong>
-        <span className="muted" style={{ fontSize: 12 }}>
-          ChatGPT
-        </span>
+        {provider && (
+          <span className="muted" style={{ fontSize: 12 }}>
+            {providerLabel(provider)}
+          </span>
+        )}
         <span className="grow" />
         {turns.length > 0 && (
           <button className="btn ghost sm" onClick={() => convoStore.set({ turns: [], api: [] })}>
