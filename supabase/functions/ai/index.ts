@@ -117,6 +117,8 @@ async function callOpenAi(key: string, messages: ChatMessage[], tools: ToolDef[]
 const GEMINI_API = "https://generativelanguage.googleapis.com/v1beta";
 const GEMINI_PREFERRED = ["gemini-flash-latest", "gemini-3-flash", "gemini-2.5-flash", "gemini-2.0-flash"];
 let geminiModel = Deno.env.get("GEMINI_MODEL") || "";
+/** Modelos de reserva, na ordem de tentativa, para quando o principal estiver sobrecarregado. */
+let geminiFallbacks: string[] = ["gemini-2.5-flash", "gemini-flash-lite-latest"];
 
 async function pickGeminiModel(key: string): Promise<string> {
   if (geminiModel) return geminiModel;
@@ -128,11 +130,14 @@ async function pickGeminiModel(key: string): Promise<string> {
         .filter((m) => m.supportedGenerationMethods?.includes("generateContent"))
         .map((m) => m.name.replace(/^models\//, ""))
         .filter((id) => !/(image|tts|audio|live|embedding|vision|robotics|computer)/.test(id));
-      geminiModel =
-        GEMINI_PREFERRED.find((m) => ids.includes(m)) ||
-        ids.find((id) => /flash/.test(id) && !/lite|preview|exp/.test(id)) ||
-        ids.find((id) => /flash/.test(id)) ||
-        "gemini-flash-latest";
+      const ordered = [
+        ...GEMINI_PREFERRED.filter((m) => ids.includes(m)),
+        ...ids.filter((id) => /flash/.test(id) && !/lite|preview|exp/.test(id)),
+        ...ids.filter((id) => /flash/.test(id) && /lite/.test(id) && !/preview|exp/.test(id)),
+        ...ids.filter((id) => /flash/.test(id)),
+      ].filter((id, i, all) => all.indexOf(id) === i);
+      geminiModel = ordered[0] || "gemini-flash-latest";
+      if (ordered.length > 1) geminiFallbacks = ordered.slice(1);
       return geminiModel;
     }
   } catch {
@@ -140,6 +145,9 @@ async function pickGeminiModel(key: string): Promise<string> {
   }
   return "gemini-flash-latest";
 }
+
+const isGeminiOverloaded = (httpStatus: number, status: string, detail: string) =>
+  httpStatus === 500 || httpStatus === 503 || httpStatus === 504 || /UNAVAILABLE|INTERNAL|DEADLINE_EXCEEDED/.test(status) || /high demand|overloaded|try again later/i.test(detail);
 
 // o Gemini exige devolver a "assinatura de raciocínio" de cada chamada de ferramenta;
 // ela viaja dentro do id da tool_call, que o app devolve intacto
@@ -219,17 +227,35 @@ function toGeminiRequest(messages: ChatMessage[], tools: ToolDef[] | undefined) 
 }
 
 async function callGemini(key: string, messages: ChatMessage[], tools: ToolDef[] | undefined): Promise<AiReply> {
-  const model = await pickGeminiModel(key);
-  const res = await fetch(`${GEMINI_API}/models/${model}:generateContent`, {
-    method: "POST",
-    headers: { "x-goog-api-key": key, "Content-Type": "application/json" },
-    body: JSON.stringify(toGeminiRequest(messages, tools)),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const detail: string = data?.error?.message || "";
-    const status: string = data?.error?.status || "";
-    if (res.status === 404 || /model/i.test(detail)) geminiModel = Deno.env.get("GEMINI_MODEL") || "";
+  const primary = await pickGeminiModel(key);
+  const attempts = [primary, ...geminiFallbacks.filter((m) => m !== primary)].slice(0, 3);
+  const payload = JSON.stringify(toGeminiRequest(messages, tools));
+
+  let data: {
+    candidates?: { content?: { parts?: Json[] }; finishReason?: string }[];
+    promptFeedback?: { blockReason?: string };
+  } | null = null;
+  let model = primary;
+  for (const candidate of attempts) {
+    const res = await fetch(`${GEMINI_API}/models/${candidate}:generateContent`, {
+      method: "POST",
+      headers: { "x-goog-api-key": key, "Content-Type": "application/json" },
+      body: payload,
+    });
+    const body = await res.json().catch(() => ({}));
+    if (res.ok) {
+      data = body;
+      model = candidate;
+      break;
+    }
+    const detail: string = body?.error?.message || "";
+    const status: string = body?.error?.status || "";
+    // modelo sobrecarregado ou inexistente: tenta o próximo da lista
+    if (isGeminiOverloaded(res.status, status, detail)) continue;
+    if (res.status === 404 || (res.status === 400 && /model/i.test(detail))) {
+      if (candidate === geminiModel) geminiModel = Deno.env.get("GEMINI_MODEL") || "";
+      continue;
+    }
     if (/API key not valid|API_KEY_INVALID/i.test(detail) || res.status === 401)
       throw new ProviderError("A chave do Google Gemini configurada no servidor foi recusada. Crie uma nova em aistudio.google.com e troque o segredo GEMINI_API_KEY no Supabase.");
     if (res.status === 403 || status === "PERMISSION_DENIED")
@@ -238,6 +264,7 @@ async function callGemini(key: string, messages: ChatMessage[], tools: ToolDef[]
       throw new ProviderError("A cota gratuita do Gemini acabou por agora. Espere um minuto e tente de novo; se continuar, a cota diária renova amanhã.");
     throw new ProviderError(detail || `O Gemini respondeu com erro ${res.status}.`);
   }
+  if (!data) throw new ProviderError("O Gemini está sobrecarregado neste momento. Espere alguns segundos e tente de novo.");
 
   const candidate = data.candidates?.[0];
   const parts: Json[] = candidate?.content?.parts || [];
