@@ -1,7 +1,9 @@
 import { ArrowDown, ArrowLeft, ArrowUp, ExternalLink, ImagePlus, Plus, Star, Trash2, X } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { BlockEditor } from "../components/BlockEditor";
+import { AiFieldButton } from "../components/AiWriter";
 import { AutoTextarea, Checkbox, Empty, Modal } from "../components/common";
+import { blocksToMarkdown } from "../lib/ai";
 import { CREATIVE_CHANNELS, CREATIVE_FORMATS, CREATIVE_STAGES, creativeStageInfo, imageFileToDataUrl } from "../lib/creatives";
 import { relativeDate, today } from "../lib/dates";
 import {
@@ -173,22 +175,36 @@ function CreativeDetail({ creative }: { creative: Creative }) {
           </div>
 
           <SectionTitle>Briefing</SectionTitle>
-          <BlockEditor blocks={creative.briefing} onChange={(briefing) => set({ briefing })} emptyHint="Objetivo, público, mensagem, estilo… digite '/' para títulos e listas" />
+          <BlockEditor
+            blocks={creative.briefing}
+            onChange={(briefing) => set({ briefing })}
+            emptyHint="Objetivo, público, mensagem, estilo… digite '/' para títulos e listas"
+            aiContext={creativeContext(creative) + ". Este texto é o briefing"}
+          />
 
           <SectionTitle>Textos da peça</SectionTitle>
           <div className="stack" style={{ gap: 10 }}>
-            <label className="field">
-              Título / headline
+            <div className="field">
+              <span className="row">
+                <label htmlFor="creative-headline">Título / headline</label>
+                <AiFieldButton label="Headline" value={creative.headline} onChange={(headline) => set({ headline })} context={creativeContext(creative)} />
+              </span>
               <input id="creative-headline" className="input" value={creative.headline} placeholder="A frase principal da arte" onChange={(e) => set({ headline: e.target.value })} />
-            </label>
-            <label className="field">
-              Texto de apoio
+            </div>
+            <div className="field">
+              <span className="row">
+                <label htmlFor="creative-body">Texto de apoio</label>
+                <AiFieldButton label="Texto de apoio" value={creative.bodyText} onChange={(bodyText) => set({ bodyText })} context={creativeContext(creative)} />
+              </span>
               <textarea id="creative-body" className="textarea" rows={3} value={creative.bodyText} placeholder="Texto secundário, informações, legenda da arte" onChange={(e) => set({ bodyText: e.target.value })} />
-            </label>
-            <label className="field">
-              Chamada para ação
+            </div>
+            <div className="field">
+              <span className="row">
+                <label htmlFor="creative-cta">Chamada para ação</label>
+                <AiFieldButton label="Chamada para ação" value={creative.cta} onChange={(cta) => set({ cta })} context={creativeContext(creative)} />
+              </span>
               <input id="creative-cta" className="input" value={creative.cta} placeholder="Ex.: Me chama no direct" onChange={(e) => set({ cta: e.target.value })} />
-            </label>
+            </div>
           </div>
 
           {showSlides ? (
@@ -211,6 +227,11 @@ function CreativeDetail({ creative }: { creative: Creative }) {
       </div>
     </div>
   );
+}
+
+function creativeContext(c: Creative): string {
+  const brief = blocksToMarkdown(c.briefing).slice(0, 1200);
+  return `Peça de design "${c.title || "sem título"}", formato ${c.format}${c.size ? ` (${c.size})` : ""}, canais ${c.channels.join(", ") || "não definidos"}${c.client ? `, cliente ${c.client}` : ""}${c.headline ? `, headline atual "${c.headline}"` : ""}${brief ? `. Briefing: ${brief}` : ""}`;
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {

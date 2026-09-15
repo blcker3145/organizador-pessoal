@@ -14,51 +14,21 @@ import type {
   Transaction,
   Video,
 } from "./types";
-import { ui } from "./ui";
 import { textBlock, uid } from "./util";
 
-const STORAGE_KEY = "organizador:v1";
 export const STATE_VERSION = 1;
 
-function load(): AppState {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw) as AppState;
-      if (parsed && parsed.version === STATE_VERSION) return { ...emptyState(), ...parsed };
-    }
-  } catch {
-    /* dados corrompidos: recomeça com exemplos */
-  }
-  return createSeed();
+/** Garante que dados antigos ou incompletos tenham todos os campos atuais. */
+export function normalizeState(raw: unknown): AppState | null {
+  if (!raw || typeof raw !== "object") return null;
+  const parsed = raw as AppState;
+  if (parsed.version !== STATE_VERSION || !Array.isArray(parsed.tasks)) return null;
+  return { ...emptyState(), ...parsed };
 }
 
-export const appStore = createStore<AppState>(load());
+// O estado começa vazio; a sessão (sync.ts) carrega os dados da conta ao entrar.
+export const appStore = createStore<AppState>(emptyState());
 export const useApp = appStore.use;
-
-let saveTimer: number | undefined;
-let warnedFull = false;
-appStore.subscribe(() => {
-  window.clearTimeout(saveTimer);
-  saveTimer = window.setTimeout(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(appStore.get()));
-      warnedFull = false;
-    } catch {
-      if (!warnedFull) {
-        warnedFull = true;
-        ui.toast("Não foi possível salvar: o armazenamento do navegador está cheio. Remova imagens do moodboard ou exporte um backup.");
-      }
-    }
-  }, 250);
-});
-window.addEventListener("beforeunload", () => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(appStore.get()));
-  } catch {
-    /* ignora */
-  }
-});
 
 type Collection = "tasks" | "projects" | "notes" | "videos" | "creatives" | "scriptTemplates" | "habits" | "routines" | "categories" | "transactions" | "bills" | "goals";
 type ItemOf<K extends Collection> = AppState[K][number];

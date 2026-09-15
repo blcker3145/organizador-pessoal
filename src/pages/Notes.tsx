@@ -214,7 +214,7 @@ function NoteEditor({ note }: { note: Note }) {
           </>
         )}
       </div>
-      <BlockEditor blocks={note.body} onChange={(body) => set({ body })} emptyHint="Escreva a ideia… digite '/' para títulos, listas e checklist" />
+      <BlockEditor blocks={note.body} onChange={(body) => set({ body })} aiContext={`${KIND_LABEL[note.kind]} "${note.title || "sem título"}"`} emptyHint="Escreva a ideia… digite '/' para títulos, listas e checklist" />
     </div>
   );
 }

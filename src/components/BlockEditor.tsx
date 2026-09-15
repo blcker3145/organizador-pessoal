@@ -1,11 +1,19 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { Sparkles } from "lucide-react";
+import { Fragment, useLayoutEffect, useRef, useState } from "react";
+import { blocksToMarkdown, markdownToBlocks, WRITING_ACTIONS } from "../lib/ai";
 import type { Block, BlockType } from "../lib/types";
+import { ui } from "../lib/ui";
 import { cx, normalize, textBlock } from "../lib/util";
 import { applyVoiceCommands } from "../lib/speech";
+import { AiPanel, type AiScope } from "./AiWriter";
 import { AutoTextarea, Checkbox } from "./common";
 import { DictationBar, DictationButton, useDictation } from "./Dictation";
 
-const MENU: { type: BlockType; label: string; hint: string; keys: string }[] = [
+type MenuItem =
+  | { kind: "block"; type: BlockType; label: string; hint: string; keys: string }
+  | { kind: "ai"; id: string; label: string; hint: string; keys: string; instruction: string };
+
+const BLOCK_MENU: { type: BlockType; label: string; hint: string; keys: string }[] = [
   { type: "p", label: "Texto", hint: "", keys: "texto paragrafo text" },
   { type: "h1", label: "Título 1", hint: "#", keys: "titulo 1 h1 heading" },
   { type: "h2", label: "Título 2", hint: "##", keys: "titulo 2 h2 heading subtitulo" },
@@ -15,6 +23,13 @@ const MENU: { type: BlockType; label: string; hint: string; keys: string }[] = [
   { type: "todo", label: "Checklist", hint: "[]", keys: "checklist tarefa todo caixa" },
   { type: "quote", label: "Citação", hint: ">", keys: "citacao quote" },
   { type: "divider", label: "Divisor", hint: "---", keys: "divisor linha divider" },
+];
+
+const AI_KEYS = "ia ai chatgpt gpt inteligencia artificial";
+const MENU: MenuItem[] = [
+  { kind: "ai", id: "ai-pedir", label: "IA: pedir algo…", hint: "ChatGPT", keys: `${AI_KEYS} pedir perguntar escrever`, instruction: "" },
+  ...BLOCK_MENU.map((m) => ({ kind: "block" as const, ...m })),
+  ...WRITING_ACTIONS.map((a) => ({ kind: "ai" as const, id: `ai-${a.id}`, label: `IA: ${a.label}`, hint: "", keys: `${AI_KEYS} ${a.label.toLowerCase()}`, instruction: a.instruction })),
 ];
 
 const SHORTCUTS: [RegExp, BlockType][] = [
@@ -45,17 +60,24 @@ export function BlockEditor({
   onChange,
   emptyHint = "Clique para escrever…",
   dictation = true,
+  ai = true,
+  aiContext,
 }: {
   blocks: Block[];
   onChange: (blocks: Block[]) => void;
   emptyHint?: string;
   /** Mostra o botão de ditado por voz. */
   dictation?: boolean;
+  /** Mostra a escrita com IA no menu "/" e no botão ✨. */
+  ai?: boolean;
+  /** O que é este texto (ex.: roteiro de vídeo curto), para a IA entender o pedido. */
+  aiContext?: string;
 }) {
   const refs = useRef(new Map<string, HTMLTextAreaElement | HTMLDivElement>());
   const pending = useRef<{ id: string; pos: number } | null>(null);
   const wrap = useRef<HTMLDivElement>(null);
   const [menu, setMenu] = useState<{ id: string; filter: string; index: number; top: number } | null>(null);
+  const [aiPanel, setAiPanel] = useState<{ key: number; anchorId: string; scopeId: string | null; scope: AiScope; instruction: string; autoRun: boolean } | null>(null);
 
   const list = blocks.length ? blocks : [textBlock()];
 
@@ -150,10 +172,73 @@ export function BlockEditor({
 
   const menuItems = menu
     ? MENU.filter((m) => {
+        if (m.kind === "ai" && !ai) return false;
         const f = normalize(menu.filter.trim());
-        return !f || normalize(m.label).includes(f) || m.keys.includes(f);
+        return !f || normalize(m.label).includes(f) || normalize(m.keys).includes(f);
       })
     : [];
+
+  /* ---------- Escrita com IA ---------- */
+  const openAi = (anchorId: string, instruction: string, textAfterSlash: string | null) => {
+    setMenu(null);
+    const current = latest.current.list;
+    let working = current;
+    if (textAfterSlash !== null) {
+      working = current.map((b) => (b.id === anchorId ? { ...b, text: textAfterSlash } : b));
+      onChange(working);
+    }
+    const idx = working.findIndex((b) => b.id === anchorId);
+    const anchor = working[idx];
+    // parágrafo de referência: o próprio bloco se tiver texto, senão o anterior com texto
+    let scopeId: string | null = anchor && anchor.type !== "divider" && anchor.text.trim() ? anchor.id : null;
+    for (let i = idx - 1; !scopeId && i >= 0; i--) if (working[i].type !== "divider" && working[i].text.trim()) scopeId = working[i].id;
+    const hasText = working.some((b) => b.text.trim());
+    setAiPanel({ key: Date.now(), anchorId, scopeId, scope: "all", instruction, autoRun: !!instruction && hasText });
+  };
+
+  const aiGetText = () => {
+    const { list: current } = latest.current;
+    if (aiPanel?.scope === "block" && aiPanel.scopeId) return current.find((b) => b.id === aiPanel.scopeId)?.text || "";
+    return blocksToMarkdown(current);
+  };
+
+  const aiReplace = (md: string) => {
+    const generated = markdownToBlocks(md);
+    const { list: current } = latest.current;
+    if (aiPanel?.scope === "block" && aiPanel.scopeId) {
+      const next: Block[] = [];
+      current.forEach((b) => {
+        if (b.id === aiPanel.scopeId) next.push(...generated);
+        else if (!(b.id === aiPanel.anchorId && b.type === "p" && !b.text)) next.push(b);
+      });
+      onChange(next.length ? next : generated);
+    } else {
+      onChange(generated);
+    }
+    ui.toast("Texto da IA aplicado");
+  };
+
+  const aiInsert = (md: string) => {
+    const generated = markdownToBlocks(md);
+    const { list: current } = latest.current;
+    const idx = current.findIndex((b) => b.id === aiPanel?.anchorId);
+    const next = current.slice();
+    if (idx < 0) next.push(...generated);
+    else if (next[idx].type === "p" && !next[idx].text) next.splice(idx, 1, ...generated);
+    else next.splice(idx + 1, 0, ...generated);
+    onChange(next);
+    ui.toast("Texto da IA inserido");
+  };
+
+  const choose = (id: string, item: MenuItem) => {
+    if (item.kind === "block") {
+      applyType(id, item.type);
+      return;
+    }
+    const current = list.find((b) => b.id === id);
+    const rest = menu && menu.id === id && current?.text.startsWith("/") ? current.text.slice(1 + menu.filter.length).trim() : current?.text || "";
+    openAi(id, item.instruction, rest);
+  };
 
   const applyType = (id: string, type: BlockType) => {
     // mantém o texto que vinha depois do comando "/filtro"
@@ -211,7 +296,7 @@ export function BlockEditor({
       if (e.key === "Enter") {
         e.preventDefault();
         const item = menuItems[menu.index];
-        if (item) applyType(block.id, item.type);
+        if (item) choose(block.id, item);
         else setMenu(null);
         return;
       }
@@ -314,22 +399,62 @@ export function BlockEditor({
     commit([...list, nb], { id: nb.id, pos: 0 });
   };
 
+  function renderAiPanel() {
+    if (!aiPanel) return null;
+    const scopeBlock = aiPanel.scopeId ? list.find((b) => b.id === aiPanel.scopeId) : null;
+    return (
+      <AiPanel
+        key={aiPanel.key}
+        initialInstruction={aiPanel.instruction}
+        autoRun={aiPanel.autoRun}
+        getText={aiGetText}
+        context={aiContext}
+        blockPreview={scopeBlock ? scopeBlock.text.slice(0, 120) : ""}
+        scope={aiPanel.scope}
+        onScope={(scope) => setAiPanel((p) => (p ? { ...p, scope } : p))}
+        onReplace={aiReplace}
+        onInsert={aiInsert}
+        onClose={() => setAiPanel(null)}
+      />
+    );
+  }
+
   let numberCounter = 0;
   const isEmpty = list.length === 1 && list[0].type === "p" && !list[0].text;
 
   return (
     <div className="editor" ref={wrap}>
-      {dictation && (
+      {(dictation || ai) && (
         <div className="editor-tools">
-          <DictationButton dictation={dictate} />
+          {ai && (
+            <button
+              type="button"
+              className={cx("btn ghost sm", aiPanel && "ai-on")}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                if (aiPanel) {
+                  setAiPanel(null);
+                  return;
+                }
+                const anchor = (caret.current && list.find((b) => b.id === caret.current!.id)) || list[list.length - 1];
+                openAi(anchor.id, "", null);
+              }}
+              title="Escrever com IA (ChatGPT). Também dá para digitar / e escolher uma ação de IA."
+            >
+              <Sparkles size={14} /> IA
+            </button>
+          )}
+          {dictation && <DictationButton dictation={dictate} />}
         </div>
       )}
       {list.map((block, idx) => {
         numberCounter = block.type === "number" ? numberCounter + 1 : 0;
+        const panelHere = aiPanel && aiPanel.anchorId === block.id;
+        const panel = panelHere ? renderAiPanel() : null;
         if (block.type === "divider") {
           return (
+            <Fragment key={block.id}>
             <div
-              key={block.id}
               className="blk divider"
               tabIndex={0}
               role="separator"
@@ -341,10 +466,13 @@ export function BlockEditor({
             >
               <hr />
             </div>
+            {panel}
+            </Fragment>
           );
         }
         return (
-          <div key={block.id} className={cx("blk", block.type, block.checked && "checked")}>
+          <Fragment key={block.id}>
+          <div className={cx("blk", block.type, block.checked && "checked")}>
             {block.type === "bullet" && <span className="marker">•</span>}
             {block.type === "number" && <span className="marker num">{numberCounter}.</span>}
             {block.type === "todo" && (
@@ -372,8 +500,11 @@ export function BlockEditor({
               onBlur={() => window.setTimeout(() => setMenu((m) => (m && m.id === block.id ? null : m)), 150)}
             />
           </div>
+          {panel}
+          </Fragment>
         );
       })}
+      {aiPanel && !list.some((b) => b.id === aiPanel.anchorId) && renderAiPanel()}
       <div className="editor-add" onClick={addAtEnd} aria-hidden="true">
         &nbsp;
       </div>
@@ -383,11 +514,12 @@ export function BlockEditor({
           {menuItems.length === 0 && <div className="menu-item muted">Nenhum bloco encontrado</div>}
           {menuItems.map((m, i) => (
             <div
-              key={m.type}
+              key={m.kind === "ai" ? m.id : m.type}
               className={cx("menu-item", i === menu.index && "on")}
               onMouseEnter={() => setMenu({ ...menu, index: i })}
-              onClick={() => applyType(menu.id, m.type)}
+              onClick={() => choose(menu.id, m)}
             >
+              {m.kind === "ai" && <Sparkles size={13} className="ai-icon" />}
               {m.label}
               {m.hint && <small>{m.hint}</small>}
             </div>

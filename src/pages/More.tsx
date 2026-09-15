@@ -1,5 +1,6 @@
-import { ChevronRight, Search, Settings } from "lucide-react";
+import { ChevronRight, Search, Settings, Sparkles } from "lucide-react";
 import { MODULES } from "../components/Sidebar";
+import { AccountBox } from "../components/Auth";
 import { ui } from "../lib/ui";
 
 export function MorePage() {
@@ -20,6 +21,13 @@ export function MorePage() {
           </div>
         ))}
         <div style={{ padding: 0 }}>
+          <button className="side-item" style={{ minHeight: 48, color: "var(--text)" }} onClick={ui.openAssistant}>
+            <Sparkles size={16} />
+            <span className="grow">Assistente IA</span>
+            <ChevronRight size={16} />
+          </button>
+        </div>
+        <div style={{ padding: 0 }}>
           <button className="side-item" style={{ minHeight: 48, color: "var(--text)" }} onClick={ui.openPalette}>
             <Search size={16} />
             <span className="grow">Buscar</span>
@@ -33,6 +41,9 @@ export function MorePage() {
             <ChevronRight size={16} />
           </a>
         </div>
+      </div>
+      <div style={{ marginTop: 20 }}>
+        <AccountBox />
       </div>
     </div>
   );

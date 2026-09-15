@@ -22,6 +22,7 @@ interface UIState {
   captureText: string;
   taskId: string | null;
   reviewOpen: boolean;
+  assistantOpen: boolean;
   confirm: ConfirmRequest | null;
   toasts: Toast[];
 }
@@ -32,6 +33,7 @@ export const uiStore = createStore<UIState>({
   captureText: "",
   taskId: null,
   reviewOpen: false,
+  assistantOpen: false,
   confirm: null,
   toasts: [],
 });
@@ -48,6 +50,8 @@ export const ui = {
   closeTask: () => set({ taskId: null }),
   openReview: () => set({ reviewOpen: true }),
   closeReview: () => set({ reviewOpen: false }),
+  openAssistant: () => set({ assistantOpen: true, paletteOpen: false, captureOpen: false, taskId: null }),
+  closeAssistant: () => set({ assistantOpen: false }),
   toast(text: string, action?: Toast["action"]) {
     const t: Toast = { id: uid(), text, action };
     uiStore.set((s) => ({ ...s, toasts: [...s.toasts.slice(-2), t] }));

@@ -1,4 +1,8 @@
 import { useEffect } from "react";
+import { AssistantDrawer } from "./components/Assistant";
+import { AuthScreen, ErrorScreen, LoadingScreen, NewPasswordScreen, OnboardingScreen, SetupMissingScreen } from "./components/Auth";
+import { supabaseConfigured } from "./lib/supabase";
+import { startAuth, useSession } from "./lib/sync";
 import { CommandPalette, ConfirmDialog, Toasts, WeeklyReview } from "./components/Overlays";
 import { QuickCaptureModal } from "./components/QuickCapture";
 import { MobileNav, Sidebar } from "./components/Sidebar";
@@ -42,10 +46,16 @@ function useShortcuts() {
         else ui.openPalette();
         return;
       }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "j") {
+        e.preventDefault();
+        if (uiStore.get().assistantOpen) ui.closeAssistant();
+        else ui.openAssistant();
+        return;
+      }
       const target = e.target as HTMLElement;
       const typing = target.closest("input, textarea, select, [contenteditable='true']");
       const s = uiStore.get();
-      const overlayOpen = s.paletteOpen || s.captureOpen || s.confirm || s.reviewOpen;
+      const overlayOpen = s.paletteOpen || s.captureOpen || s.confirm || s.reviewOpen || s.assistantOpen;
       if (!typing && !overlayOpen && !e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === "n") {
         e.preventDefault();
         ui.openCapture();
@@ -83,8 +93,29 @@ function Router() {
   }
 }
 
+startAuth();
+
 export function App() {
+  const { phase } = useSession();
   useTheme();
+  let screen: React.ReactNode;
+  if (!supabaseConfigured) screen = <SetupMissingScreen />;
+  else if (phase === "loading") screen = <LoadingScreen />;
+  else if (phase === "signedOut") screen = <AuthScreen />;
+  else if (phase === "recovery") screen = <NewPasswordScreen />;
+  else if (phase === "onboarding") screen = <OnboardingScreen />;
+  else if (phase === "error") screen = <ErrorScreen />;
+  else screen = <Workspace />;
+  return (
+    <>
+      {screen}
+      <Toasts />
+      {phase === "error" && <ConfirmDialog />}
+    </>
+  );
+}
+
+function Workspace() {
   useShortcuts();
   const { path } = useRoute();
   useEffect(() => {
@@ -99,11 +130,11 @@ export function App() {
       </main>
       <MobileNav />
       <TaskDrawer />
+      <AssistantDrawer />
       <QuickCaptureModal />
       <CommandPalette />
       <WeeklyReview />
       <ConfirmDialog />
-      <Toasts />
     </div>
   );
 }

@@ -11,11 +11,13 @@ import {
   Repeat2,
   Search,
   Settings,
+  Sparkles,
   Sun,
   Wallet,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useApp } from "../lib/store";
+import { AccountBox } from "./Auth";
 import { navigate, ui, useRoute } from "../lib/ui";
 import { cx } from "../lib/util";
 
@@ -64,6 +66,9 @@ export function Sidebar() {
       <button className="side-item" onClick={() => ui.openCapture()}>
         <Plus size={16} /> Captura rápida <kbd>N</kbd>
       </button>
+      <button className="side-item" onClick={ui.openAssistant}>
+        <Sparkles size={16} /> Assistente IA <kbd>Ctrl J</kbd>
+      </button>
       <div className="side-group">Módulos</div>
       {MODULES.map((m) => (
         <a key={m.path} href={`#${m.path}`} className={cx("side-item", isActive(path, m.path) && "active")}>
@@ -86,6 +91,7 @@ export function Sidebar() {
       <a href="#/config" className={cx("side-item", isActive(path, "/config") && "active")}>
         <Settings size={16} /> Configurações
       </a>
+      <AccountBox />
     </nav>
   );
 }

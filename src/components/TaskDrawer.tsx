@@ -292,7 +292,7 @@ function TaskDetail({ task }: { task: Task }) {
       </div>
 
       <div className="card-title">Notas</div>
-      <BlockEditor blocks={task.body} onChange={(body) => set({ body })} emptyHint="Escreva detalhes, links ou digite '/'" />
+      <BlockEditor blocks={task.body} onChange={(body) => set({ body })} aiContext={`Notas da tarefa "${task.title || "sem título"}"`} emptyHint="Escreva detalhes, links ou digite '/'" />
     </>
   );
 }

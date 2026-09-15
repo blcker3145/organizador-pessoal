@@ -1,6 +1,7 @@
 import { ArrowLeft, BookOpen, Copy, ExternalLink, Pencil, Plus, Star, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { BlockEditor } from "../components/BlockEditor";
+import { AiFieldButton } from "../components/AiWriter";
 import { AutoTextarea, Checkbox, Empty, PLATFORMS, STAGES, stageInfo } from "../components/common";
 import { relativeDate, today } from "../lib/dates";
 import {
@@ -17,7 +18,7 @@ import {
 } from "../lib/store";
 import type { Video, VideoStage } from "../lib/types";
 import { navigate, ui } from "../lib/ui";
-import { cx, uid } from "../lib/util";
+import { blocksToText, cx, uid } from "../lib/util";
 import { scriptWords } from "./Videos";
 
 const WORDS_PER_MINUTE = 150;
@@ -199,7 +200,12 @@ function VideoDetail({ video }: { video: Video }) {
                 ))}
               </select>
             </div>
-            <BlockEditor blocks={video.script} onChange={(script) => set({ script })} emptyHint="Escreva o roteiro ou aplique um modelo" />
+            <BlockEditor
+              blocks={video.script}
+              onChange={(script) => set({ script })}
+              emptyHint="Escreva o roteiro ou aplique um modelo"
+              aiContext={`Roteiro do vídeo "${video.title || "sem título"}", formato ${video.format === "curto" ? "curto (até 60 s)" : "longo"}, para ${video.platforms.join(", ") || "YouTube"}`}
+            />
           </div>
 
           <aside className="stack" style={{ gap: 14 }}>
@@ -218,6 +224,13 @@ function VideoDetail({ video }: { video: Video }) {
             <section className="card">
               <div className="card-title">
                 <span>Legenda e hashtags</span>
+                <span className="grow" />
+                <AiFieldButton
+                  label="Legenda e hashtags"
+                  value={video.caption || blocksToText(video.script).slice(0, 1500)}
+                  onChange={(caption) => set({ caption })}
+                  context={`Legenda para o vídeo "${video.title}" em ${video.platforms.join(", ")}. Se o texto for o roteiro, escreva a legenda a partir dele, com hashtags no final`}
+                />
                 <button
                   className="link-btn"
                   disabled={!video.caption}

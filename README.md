@@ -2,7 +2,7 @@
 
 App web de organização pessoal no estilo Notion: Hoje, Tarefas, Ideias & Notas, Vídeos (pipeline + roteiro), Criativos (planejamento de peças de design), Hábitos, Rotina e Finanças.
 
-Front-end em React + TypeScript + Vite. Os dados ficam salvos no navegador (localStorage); na primeira abertura o app carrega dados de exemplo. Em Configurações dá para exportar/importar backup, restaurar os exemplos ou apagar tudo.
+Front-end em React + TypeScript + Vite. Login, dados de cada conta e IA (ChatGPT) pelo Supabase: veja [SUPABASE.md](SUPABASE.md) para configurar.
 
 Site publicado: https://blcker3145.github.io/organizador-pessoal/
 
@@ -10,6 +10,7 @@ Site publicado: https://blcker3145.github.io/organizador-pessoal/
 
 ```bash
 npm install
+cp .env.example .env.local   # preencha com os dados do Supabase
 npm run dev
 ```
 

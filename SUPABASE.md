@@ -1,0 +1,92 @@
+# Configurar o Supabase
+
+O app usa o Supabase para três coisas: login, dados de cada conta na nuvem e a IA pelo servidor, onde a chave da OpenAI fica guardada.
+
+Leva uns 15 minutos. Faça na ordem.
+
+## 1. Criar o projeto
+
+1. Abra https://supabase.com/dashboard e clique em **New project**.
+2. **Name:** `organizador`. **Database password:** clique em *Generate a password* e guarde num lugar seguro.
+3. **Region:** *South America (São Paulo)*.
+4. Clique em **Create new project** e espere uns 2 minutos até terminar.
+
+## 2. Criar as tabelas
+
+1. No menu da esquerda, abra **SQL Editor** e clique em **New query**.
+2. Abra o arquivo `supabase/migrations/0001_organizador.sql` deste projeto, copie **tudo** e cole no editor.
+3. Clique em **Run**. Deve aparecer *Success. No rows returned*.
+
+Isso cria a tabela de dados de cada conta, as regras para cada pessoa ver só os próprios dados e o limite diário da IA.
+
+## 3. Configurar o login
+
+1. Abra **Authentication → URL Configuration**.
+2. Em **Site URL**, coloque:
+   `https://blcker3145.github.io/organizador-pessoal/`
+3. Em **Redirect URLs**, clique em **Add URL** e adicione as duas:
+   - `https://blcker3145.github.io/organizador-pessoal/`
+   - `http://localhost:5173/`
+4. Clique em **Save**.
+
+Em **Authentication → Sign In / Providers → Email**, o login por e-mail já vem ligado.
+
+- **Confirm email** ligado: a pessoa precisa clicar no link do e-mail antes de entrar. O Supabase gratuito envia poucos e-mails por hora. Para testar agora, você pode desligar e religar depois.
+- Para ninguém mais criar conta, desligue **Allow new users to sign up**.
+
+## 4. Publicar a função de IA
+
+1. Abra **Edge Functions** e clique em **Deploy a new function → Via Editor**.
+2. **Nome da função:** `ai` (exatamente assim, minúsculo).
+3. Apague o código de exemplo, abra `supabase/functions/ai/index.ts` deste projeto, copie tudo e cole.
+4. Clique em **Deploy function**.
+5. Deixe ligada a opção **Verify JWT** (ou *Enforce JWT verification*). É ela que exige login.
+
+## 5. Guardar a chave da OpenAI (segredo)
+
+1. Em https://platform.openai.com/api-keys, **apague a chave antiga** (a que foi enviada no chat) e crie uma nova.
+2. No Supabase, abra **Edge Functions → Secrets** e adicione:
+
+| Name | Value |
+|---|---|
+| `OPENAI_API_KEY` | a chave nova da OpenAI |
+| `AI_DAILY_LIMIT` | `50` (pedidos por pessoa por dia; opcional) |
+| `OPENAI_MODEL` | opcional, ex.: `gpt-4o-mini`. Se não colocar, a função escolhe sozinha |
+
+3. Clique em **Save**.
+
+A chave fica só aqui. Ela nunca vai para o navegador, o código ou o GitHub.
+
+## 6. Conectar o app ao projeto
+
+1. Abra **Project Settings → API Keys** (ou **Data API**).
+2. Copie:
+   - a **Project URL** (algo como `https://abcdefgh.supabase.co`)
+   - a chave **anon public** (ou **Publishable key**)
+3. Na pasta do projeto, crie o arquivo `.env.local` com:
+
+```
+VITE_SUPABASE_URL=https://abcdefgh.supabase.co
+VITE_SUPABASE_ANON_KEY=cole-a-chave-anon-aqui
+```
+
+Essas duas informações são públicas por natureza e podem aparecer no site. Quem protege os dados são as regras do passo 2. **Nunca** coloque a chave `service_role`, a *secret key* ou a chave da OpenAI nesse arquivo.
+
+## 7. Testar e publicar
+
+1. Rode `npm run dev` e abra http://localhost:5173 no Chrome.
+2. Clique em **Criar conta**. No primeiro acesso, escolha **Trazer os dados deste navegador** para levar o que você já tinha.
+3. Teste a IA: **Ctrl J** → "o que eu tenho para fazer hoje?".
+4. Para publicar o site com login: `npm run deploy`.
+
+## Problemas comuns
+
+| Mensagem | O que fazer |
+|---|---|
+| "Falta conectar o Supabase" | Confira o `.env.local` e rode `npm run dev` de novo |
+| "Não foi possível carregar seus dados" | O SQL do passo 2 não foi aplicado |
+| "A função ai ainda não foi publicada" | Refaça o passo 4 com o nome `ai`. Se o painel criou outro endereço (ex.: `smart-task`), coloque `VITE_SUPABASE_AI_FUNCTION=smart-task` no `.env.local` |
+| "falta o segredo OPENAI_API_KEY" | Refaça o passo 5 |
+| "A conta da OpenAI está sem créditos" | Adicione saldo em platform.openai.com → Billing |
+| Link do e-mail volta para a página errada | Confira as URLs do passo 3 |
+| "Esse link expirou ou já foi usado" | Peça um novo e abra no mesmo navegador em que pediu |

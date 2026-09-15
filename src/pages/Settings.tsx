@@ -1,5 +1,7 @@
 import { Plus, X } from "lucide-react";
 import { useRef, useState } from "react";
+import { AccountSettingsSection } from "../components/AccountSettings";
+import { AiSettingsSection } from "../components/AiSettings";
 import { CommitInput } from "../components/common";
 import { MODULES } from "../components/Sidebar";
 import { clearAll, deleteCategory, deleteProject, insert, patch, remove, replaceState, resetToSeed, setState, STATE_VERSION, useApp } from "../lib/store";
@@ -44,6 +46,8 @@ export function SettingsPage() {
         <h1 className="page-title">Configurações</h1>
       </div>
 
+      <AccountSettingsSection />
+
       <section className="settings-section">
         <h2>Perfil</h2>
         <p>Seu nome aparece na saudação do Hoje.</p>
@@ -67,6 +71,8 @@ export function SettingsPage() {
           ))}
         </div>
       </section>
+
+      <AiSettingsSection />
 
       <section className="settings-section">
         <h2>Projetos</h2>
@@ -182,7 +188,7 @@ export function SettingsPage() {
 
       <section className="settings-section">
         <h2>Dados</h2>
-        <p>Por enquanto tudo fica salvo neste navegador. Exporte um backup de vez em quando.</p>
+        <p>Seus dados ficam salvos na sua conta e aparecem em qualquer navegador em que você entrar. O backup em arquivo é uma cópia extra.</p>
         <div className="row wrap">
           <button className="btn" onClick={exportData}>
             Exportar backup (.json)
@@ -206,7 +212,7 @@ export function SettingsPage() {
           <button
             className="btn danger"
             onClick={async () => {
-              const ok = await ui.confirm({ title: "Apagar tudo?", message: "Tarefas, notas, vídeos, hábitos, rotinas e finanças serão apagados deste navegador. Não dá para desfazer.", confirmLabel: "Apagar tudo", danger: true });
+              const ok = await ui.confirm({ title: "Apagar tudo?", message: "Tarefas, notas, vídeos, criativos, hábitos, rotinas e finanças serão apagados da sua conta, em todos os dispositivos. Não dá para desfazer.", confirmLabel: "Apagar tudo", danger: true });
               if (ok) {
                 clearAll();
                 ui.toast("Tudo apagado. Comece do zero.");
@@ -226,11 +232,15 @@ export function SettingsPage() {
             <span className="pill">Ctrl K</span>
           </div>
           <div>
+            <span className="grow">Assistente IA</span>
+            <span className="pill">Ctrl J</span>
+          </div>
+          <div>
             <span className="grow">Captura rápida (fora de campos de texto)</span>
             <span className="pill">N</span>
           </div>
           <div>
-            <span className="grow">Comandos do editor (títulos, listas, checklist)</span>
+            <span className="grow">Comandos do editor (títulos, listas, checklist e IA)</span>
             <span className="pill">/</span>
           </div>
           <div>
