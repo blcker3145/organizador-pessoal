@@ -4,6 +4,8 @@ App web de organização pessoal no estilo Notion: Hoje, Tarefas, Ideias & Notas
 
 Front-end em React + TypeScript + Vite. Os dados ficam salvos no navegador (localStorage); na primeira abertura o app carrega dados de exemplo. Em Configurações dá para exportar/importar backup, restaurar os exemplos ou apagar tudo.
 
+Site publicado: https://blcker3145.github.io/organizador-pessoal/
+
 ## Rodar
 
 ```bash
@@ -25,3 +27,15 @@ Abra http://localhost:5173.
 - `src/lib/`: tipos, estado e ações (`store.ts`), dados de exemplo (`seed.ts`), regras de hábitos, finanças, datas e leitura da captura rápida
 - `src/components/`: barra lateral, editor de blocos, painel de tarefa, captura rápida, busca, calendário
 - `src/pages/`: uma tela por módulo
+
+## Publicação
+
+O site é publicado no GitHub Pages a partir da branch `gh-pages`. Para publicar uma nova versão:
+
+```bash
+npm run deploy
+```
+
+O script compila o app e envia a pasta `dist` para a branch `gh-pages`. Em 1 ou 2 minutos o site atualiza.
+
+Os dados do site publicado ficam no navegador de quem acessa, separados dos dados do `localhost`. Para levar seus dados, use Configurações → Exportar backup em um endereço e Importar backup no outro.
