@@ -1,0 +1,109 @@
+import { useEffect } from "react";
+import { CommandPalette, ConfirmDialog, Toasts, WeeklyReview } from "./components/Overlays";
+import { QuickCaptureModal } from "./components/QuickCapture";
+import { MobileNav, Sidebar } from "./components/Sidebar";
+import { TaskDrawer } from "./components/TaskDrawer";
+import { useApp } from "./lib/store";
+import { ui, uiStore, useRoute } from "./lib/ui";
+import { CreativePage } from "./pages/CreativePage";
+import { CreativesPage } from "./pages/Creatives";
+import { FinancePage } from "./pages/Finance";
+import { HabitsPage } from "./pages/Habits";
+import { MorePage } from "./pages/More";
+import { NotesPage } from "./pages/Notes";
+import { RoutinePage } from "./pages/Routine";
+import { SettingsPage } from "./pages/Settings";
+import { TasksPage } from "./pages/Tasks";
+import { TodayPage } from "./pages/Today";
+import { VideoPage } from "./pages/VideoPage";
+import { VideosPage } from "./pages/Videos";
+
+function useTheme() {
+  const theme = useApp().settings.theme;
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const apply = () => {
+      const dark = theme === "dark" || (theme === "system" && mq.matches);
+      document.documentElement.dataset.theme = dark ? "dark" : "light";
+    };
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, [theme]);
+}
+
+function useShortcuts() {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        const s = uiStore.get();
+        if (s.paletteOpen) ui.closePalette();
+        else ui.openPalette();
+        return;
+      }
+      const target = e.target as HTMLElement;
+      const typing = target.closest("input, textarea, select, [contenteditable='true']");
+      const s = uiStore.get();
+      const overlayOpen = s.paletteOpen || s.captureOpen || s.confirm || s.reviewOpen;
+      if (!typing && !overlayOpen && !e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === "n") {
+        e.preventDefault();
+        ui.openCapture();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+}
+
+function Router() {
+  const { parts } = useRoute();
+  const [section, id] = parts;
+  switch (section) {
+    case "tarefas":
+      return <TasksPage />;
+    case "ideias":
+      return <NotesPage openId={id || null} />;
+    case "videos":
+      return id ? <VideoPage id={id} /> : <VideosPage />;
+    case "criativos":
+      return id ? <CreativePage id={id} /> : <CreativesPage />;
+    case "habitos":
+      return <HabitsPage />;
+    case "rotina":
+      return <RoutinePage />;
+    case "financas":
+      return <FinancePage tab={id || "mes"} />;
+    case "config":
+      return <SettingsPage />;
+    case "mais":
+      return <MorePage />;
+    default:
+      return <TodayPage />;
+  }
+}
+
+export function App() {
+  useTheme();
+  useShortcuts();
+  const { path } = useRoute();
+  useEffect(() => {
+    document.querySelector(".main")?.scrollTo(0, 0);
+    ui.closeTask();
+  }, [path]);
+  return (
+    <div className="app">
+      <Sidebar />
+      <main className="main">
+        <Router />
+      </main>
+      <MobileNav />
+      <TaskDrawer />
+      <QuickCaptureModal />
+      <CommandPalette />
+      <WeeklyReview />
+      <ConfirmDialog />
+      <Toasts />
+    </div>
+  );
+}
