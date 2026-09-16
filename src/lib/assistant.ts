@@ -1,8 +1,11 @@
 /* Assistente de IA que conversa e executa pequenas ações no app. */
 import { chat, markdownToBlocks, type ChatMessage, type ToolDef } from "./ai";
+import { formatRange, hm, isAllDayLike, LOCAL_CALENDAR_ID, parseLocal, type UiEvent } from "./calendar";
+import { defaultCalendarId, eventsInRange, newDraft, saveDraft } from "./calendarActions";
 import { CREATIVE_FORMATS, BRIEFING_SECTIONS, creativeStageInfo } from "./creatives";
 import { addDays, longDate, relativeDate, today, weekday, WEEKDAYS_LONG } from "./dates";
 import { monthSummary } from "./finance";
+import { gcalStore, refreshGcalStatus } from "./gcal";
 import {
   appStore,
   createCreative,
@@ -14,7 +17,7 @@ import {
   setTaskStatus,
   templateBlocks,
 } from "./store";
-import type { NoteKind, Priority } from "./types";
+import type { NoteKind, Priority, RepeatRule } from "./types";
 import { normalize, parseMoney, uid } from "./util";
 
 /** Remove campos undefined para não apagar os valores padrão ao criar itens. */
@@ -23,7 +26,7 @@ function compact<T extends object>(obj: T): Partial<T> {
 }
 
 export interface CreatedItem {
-  kind: "task" | "video" | "creative" | "note" | "transaction" | "done";
+  kind: "task" | "video" | "creative" | "note" | "transaction" | "done" | "event";
   id: string;
   label: string;
   path?: string;
@@ -133,6 +136,45 @@ export const ASSISTANT_TOOLS: ToolDef[] = [
   {
     type: "function",
     function: {
+      name: "criar_evento",
+      description: "Cria um compromisso na Agenda (vai para o Google Agenda quando ele está conectado). Use para reuniões, consultas, gravações com horário marcado e lembretes com hora.",
+      parameters: {
+        type: "object",
+        properties: {
+          titulo: { type: "string" },
+          data: { type: "string", description: "Data no formato AAAA-MM-DD" },
+          hora_inicio: { type: "string", description: "HH:MM (24h). Omitir para evento de dia inteiro." },
+          hora_fim: { type: "string", description: "HH:MM (24h). Se omitido, usa duracao_minutos ou 1 hora." },
+          duracao_minutos: { type: "number" },
+          data_fim: { type: "string", description: "AAAA-MM-DD, para eventos de vários dias" },
+          local: { type: "string" },
+          descricao: { type: "string" },
+          convidados: { type: "array", items: { type: "string" }, description: "E-mails dos convidados" },
+          google_meet: { type: "boolean", description: "Adicionar link do Google Meet" },
+          repetir: { type: "string", enum: ["none", "daily", "weekdays", "weekly", "monthly", "yearly"] },
+          lembrete_minutos: { type: "number", description: "Minutos antes para lembrar" },
+        },
+        required: ["titulo", "data"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "ver_agenda",
+      description: "Lista os compromissos da Agenda (Google Agenda e Organizador) a partir de uma data.",
+      parameters: {
+        type: "object",
+        properties: {
+          data_inicio: { type: "string", description: "AAAA-MM-DD; padrão hoje" },
+          dias: { type: "number", description: "Quantidade de dias (1 a 31); padrão 1" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "concluir_tarefa",
       description: "Marca como feita a tarefa aberta cujo título mais combina com o texto informado.",
       parameters: { type: "object", properties: { titulo: { type: "string" } }, required: ["titulo"] },
@@ -157,6 +199,68 @@ function findProject(name: string): string | null {
   return ensureProject(name);
 }
 
+const validTime = (t: unknown): string | null => (typeof t === "string" && /^([01]?\d|2[0-3]):[0-5]\d$/.test(t.trim()) ? t.trim().padStart(5, "0") : null);
+
+function eventLine(ev: UiEvent, withDate: boolean): string {
+  const when = withDate ? formatRange(ev) : isAllDayLike(ev) ? "dia inteiro" : `${hm(ev.start)}–${hm(ev.end)}`;
+  return `- ${when}: ${ev.title}${ev.location ? ` (${ev.location})` : ""}`;
+}
+
+async function agendaText(from: Date, days: number): Promise<string> {
+  await refreshGcalStatus();
+  const to = new Date(from.getFullYear(), from.getMonth(), from.getDate() + days);
+  const list = await eventsInRange(from, to);
+  const source = gcalStore.get().connected ? "Google Agenda + Organizador" : "Organizador (Google Agenda não conectado)";
+  if (!list.length) return `Nenhum compromisso (${source}).`;
+  return `Fonte: ${source}\n${list.map((e) => eventLine(e, days > 1)).join("\n")}`;
+}
+
+async function createEventTool(a: Record<string, unknown>): Promise<{ result: string; item?: CreatedItem }> {
+  const date = validDate(a.data);
+  if (!date) return { result: "Erro: informe a data no formato AAAA-MM-DD." };
+  await refreshGcalStatus();
+  const startTime = validTime(a.hora_inicio);
+  const allDay = !startTime;
+  const start = parseLocal(allDay ? date : `${date}T${startTime}`);
+  const endTime = validTime(a.hora_fim);
+  const endDate = validDate(a.data_fim) || date;
+  let end: Date;
+  if (allDay) end = new Date(parseLocal(endDate < date ? date : endDate).getTime() + 86_400_000);
+  else if (endTime) end = parseLocal(`${endDate}T${endTime}`);
+  else end = new Date(start.getTime() + (typeof a.duracao_minutos === "number" && a.duracao_minutos > 0 ? a.duracao_minutos : 60) * 60_000);
+  if (!allDay && end <= start) end = new Date(start.getTime() + 60 * 60_000);
+
+  const calendarId = defaultCalendarId();
+  const d = newDraft(start, end, allDay, calendarId);
+  d.title = str(a.titulo) || "Sem título";
+  d.location = str(a.local);
+  d.description = str(a.descricao);
+  const guests = strList(a.convidados).filter((g) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(g));
+  const google = calendarId !== LOCAL_CALENDAR_ID;
+  if (google) {
+    d.guests = guests;
+    d.addMeet = a.google_meet === true;
+  }
+  const repeat = str(a.repetir) as RepeatRule;
+  if (["daily", "weekdays", "weekly", "monthly", "yearly"].includes(repeat)) d.repeat = repeat;
+  if (typeof a.lembrete_minutos === "number" && a.lembrete_minutos >= 0) {
+    d.useDefaultReminders = false;
+    d.reminders = [Math.round(a.lembrete_minutos)];
+  }
+  try {
+    await saveDraft(d);
+  } catch (e) {
+    return { result: `Erro ao criar o evento: ${e instanceof Error ? e.message : "falha desconhecida"}` };
+  }
+  const where = google ? "no Google Agenda" : "na agenda do Organizador (Google Agenda não conectado)";
+  const skipped = !google && (guests.length || a.google_meet === true) ? " Convidados e Meet só funcionam com o Google Agenda conectado." : "";
+  const when = allDay ? date : `${date} ${hm(start)}–${hm(end)}`;
+  return {
+    result: `Evento criado ${where}: "${d.title}" em ${when}.${skipped}`,
+    item: { kind: "event", id: uid(), label: `${d.title} · ${relativeDate(date)}${allDay ? "" : ` ${hm(start)}`}`, path: "/agenda" },
+  };
+}
+
 function overview(): string {
   const s = appStore.get();
   const d0 = today();
@@ -179,7 +283,7 @@ function overview(): string {
 }
 
 /** Executa uma ferramenta pedida pela IA e devolve texto para ela + item criado para a interface. */
-export function runTool(name: string, rawArgs: string): { result: string; item?: CreatedItem } {
+export async function runTool(name: string, rawArgs: string): Promise<{ result: string; item?: CreatedItem }> {
   let a: Record<string, unknown> = {};
   try {
     a = JSON.parse(rawArgs || "{}");
@@ -260,8 +364,15 @@ export function runTool(name: string, rawArgs: string): { result: string; item?:
       setTaskStatus(match.id, "done");
       return { result: `Tarefa concluída: "${match.title}".`, item: { kind: "done", id: match.id, label: match.title } };
     }
+    case "criar_evento":
+      return createEventTool(a);
+    case "ver_agenda": {
+      const from = parseLocal(validDate(a.data_inicio) || today());
+      const days = Math.max(1, Math.min(31, typeof a.dias === "number" ? Math.round(a.dias) : 1));
+      return { result: await agendaText(from, days) };
+    }
     case "ver_resumo":
-      return { result: overview() };
+      return { result: `${overview()}\n\nAgenda de hoje:\n${await agendaText(parseLocal(today()), 1)}` };
     default:
       return { result: `Ferramenta desconhecida: ${name}` };
   }
@@ -280,7 +391,8 @@ Projetos existentes: ${s.projects.map((p) => p.name).join(", ") || "nenhum"}.
 Categorias de saída: ${s.categories.filter((c) => c.kind === "saida").map((c) => c.name).join(", ") || "nenhuma"}. Categorias de entrada: ${s.categories.filter((c) => c.kind === "entrada").map((c) => c.name).join(", ") || "nenhuma"}.
 Quando a pessoa pedir para adicionar, criar, anotar, registrar ou concluir algo, use as ferramentas em vez de só responder. Converta datas relativas ("amanhã", "sexta") para AAAA-MM-DD.
 Se pedirem para criar um vídeo ou criativo com conteúdo (roteiro, copy, slides, briefing), escreva esse conteúdo completo nos campos da ferramenta.
-Para perguntas sobre o que há para fazer, chame ver_resumo antes de responder.
+Compromissos com data e hora (reuniões, consultas, chamadas) vão para a Agenda com criar_evento; afazeres sem horário fixo são tarefas.
+Para perguntas sobre o que há para fazer, chame ver_resumo antes de responder. Para a agenda de outros dias, use ver_agenda.
 Depois de agir, confirme em uma ou duas frases o que foi feito. Não invente itens que não foram criados.`;
 }
 
@@ -295,11 +407,11 @@ export async function runAssistant(history: ChatMessage[]): Promise<{ messages: 
       break;
     }
     convo.push({ role: "assistant", content: content || null, tool_calls: toolCalls });
-    toolCalls.forEach((call) => {
-      const { result, item } = runTool(call.function.name, call.function.arguments);
+    for (const call of toolCalls) {
+      const { result, item } = await runTool(call.function.name, call.function.arguments);
       if (item) items.push(item);
       convo.push({ role: "tool", tool_call_id: call.id, content: result });
-    });
+    }
   }
   return { messages: convo.slice(1), items };
 }

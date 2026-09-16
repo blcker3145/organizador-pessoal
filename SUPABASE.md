@@ -89,6 +89,46 @@ Essas duas informações são públicas por natureza e podem aparecer no site. Q
 3. Teste a IA: **Ctrl J** → "o que eu tenho para fazer hoje?".
 4. Para publicar o site com login: `npm run deploy`.
 
+## 8. Agenda com Google Agenda (opcional)
+
+A Agenda do Organizador funciona sozinha. Para ver e editar o Google Agenda dentro dele, cada pessoa clica em **Conectar Google Agenda** uma vez. Para isso funcionar, o servidor precisa de um "cliente OAuth" do Google.
+
+### 8.1 Banco e função
+
+1. **SQL Editor** → cole o conteúdo de `supabase/migrations/0002_google_calendar.sql` → **Run**.
+2. **Edge Functions** → **Deploy a new function** → **Via Editor**. Nome: `google-calendar`. Cole o conteúdo de `supabase/functions/google-calendar/index.ts` e publique.
+3. Abra a função → **Details** → desligue **Verify JWT with legacy secret** (ou "Enforce JWT") → **Save**. O Google volta para essa função sem o login do Supabase; a própria função confere o login nos outros pedidos.
+4. Se o painel criou outro nome, coloque `VITE_SUPABASE_GCAL_FUNCTION=<nome>` no `.env.local`.
+
+### 8.2 Google Cloud
+
+1. Abra https://console.cloud.google.com e crie um projeto (ex.: **Organizador**).
+2. **APIs e serviços → Biblioteca** → procure **Google Calendar API** → **Ativar**.
+3. **APIs e serviços → Tela de consentimento OAuth** (Google Auth Platform):
+   - Tipo de usuário: **Externo**. Nome do app, e-mail de suporte e e-mail de contato.
+   - Em **Público-alvo**, adicione como **usuários de teste** os e-mails Google que vão conectar (até 100).
+4. **APIs e serviços → Credenciais → Criar credenciais → ID do cliente OAuth**:
+   - Tipo: **Aplicativo da Web**.
+   - **URIs de redirecionamento autorizados**: `https://SEU-PROJETO.supabase.co/functions/v1/google-calendar` (troque pelo endereço do seu projeto e pelo nome da função).
+   - Crie e copie o **ID do cliente** e a **Chave secreta do cliente**.
+
+### 8.3 Segredos
+
+Em **Edge Functions → Secrets** adicione (cole direto no painel, nunca no chat ou no código):
+
+| Nome | Valor |
+|---|---|
+| `GOOGLE_CLIENT_ID` | ID do cliente OAuth |
+| `GOOGLE_CLIENT_SECRET` | chave secreta do cliente |
+| `APP_ORIGINS` (opcional) | sites que podem receber a volta do login, separados por vírgula. Padrão: `https://blcker3145.github.io,http://localhost:5173` |
+
+Pronto: no app, **Agenda → Conectar Google Agenda**.
+
+### 8.4 Sobre o modo de teste do Google
+
+- Enquanto o app estiver em **Teste** no Google Cloud, só os usuários de teste conseguem conectar, e o Google **expira a conexão a cada 7 dias**. O Organizador avisa e basta clicar em **Conectar** de novo.
+- Para liberar para qualquer pessoa sem expirar, publique o app na tela de consentimento. Como a agenda é um acesso "sensível", o Google pede verificação (política de privacidade, domínio, vídeo). Sem verificar, aparece o aviso "O Google não verificou este app" (dá para continuar em **Avançado**).
+
 ## Problemas comuns
 
 | Mensagem | O que fazer |
@@ -101,3 +141,9 @@ Essas duas informações são públicas por natureza e podem aparecer no site. Q
 | "A conta da OpenAI está sem créditos" | Adicione saldo em platform.openai.com → Billing |
 | Link do e-mail volta para a página errada | Confira as URLs do passo 3 |
 | "Esse link expirou ou já foi usado" | Peça um novo e abra no mesmo navegador em que pediu |
+| "A integração ainda não foi configurada no servidor" (Agenda) | Faltam os segredos do passo 8.3 |
+| "A função do Google Agenda ainda não foi publicada" | Refaça o passo 8.1 |
+| Google mostra "redirect_uri_mismatch" | O endereço do passo 8.2.4 precisa ser idêntico ao da função |
+| "Não foi possível salvar a conexão" | O SQL do passo 8.1 não foi aplicado |
+| Google mostra "Acesso bloqueado" / "app em teste" | Adicione o e-mail em usuários de teste (8.2.3) |
+| "A Google Calendar API não está ativada" | Refaça o passo 8.2.2 |

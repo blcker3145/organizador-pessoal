@@ -1,5 +1,8 @@
-import { ArrowRight, CalendarClock, Plus, Star } from "lucide-react";
-import { useMemo, useState } from "react";
+import { ArrowRight, CalendarClock, Plus, Star, Video } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { hm, isAllDayLike, meetLink, type UiEvent } from "../lib/calendar";
+import { eventsForDay } from "../lib/calendarActions";
+import { refreshGcalStatus, useGcal } from "../lib/gcal";
 import { CAPTURE_KINDS, guessCapture } from "../lib/capture";
 import { creativeStageInfo } from "../lib/creatives";
 import { addDays, longDate, monthKey, nowMinutes, relativeDate, timeToMinutes, today, weekday } from "../lib/dates";
@@ -183,6 +186,7 @@ export function TodayPage() {
         </div>
 
         <div className="stack" style={{ gap: 16 }}>
+          <AgendaToday />
           <RoutineNow />
           <HabitsToday />
           <MoneyToday />
@@ -191,6 +195,65 @@ export function TodayPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function AgendaToday() {
+  const state = useApp();
+  const gcal = useGcal();
+  const [events, setEvents] = useState<UiEvent[] | null>(null);
+  const d0 = today();
+
+  useEffect(() => {
+    refreshGcalStatus();
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    eventsForDay(new Date()).then((list) => alive && setEvents(list));
+    return () => {
+      alive = false;
+    };
+  }, [d0, state.events, state.calendarPrefs.hidden, gcal.version, gcal.connected, gcal.calendars]);
+
+  const now = Date.now();
+  return (
+    <section className="card">
+      <div className="card-title">
+        <span>Agenda de hoje{events ? ` · ${events.length}` : ""}</span>
+        <a className="link-btn" href="#/agenda">
+          Abrir agenda
+        </a>
+      </div>
+      {events === null && <Empty>Carregando…</Empty>}
+      {events?.length === 0 && <Empty>Nenhum compromisso hoje.</Empty>}
+      {events?.map((ev) => {
+        const past = !isAllDayLike(ev) && ev.end.getTime() < now;
+        const meet = meetLink(ev.google);
+        return (
+          <div key={ev.key} className={cx("step-row", past && "done")} style={{ cursor: "pointer" }} onClick={() => navigate("/agenda")}>
+            <i style={{ width: 8, height: 8, borderRadius: "50%", background: ev.color, flex: "none" }} />
+            <span className="muted num" style={{ fontSize: 12.5, width: 44, flex: "none" }}>
+              {isAllDayLike(ev) ? "dia" : hm(ev.start)}
+            </span>
+            <span className="s-title grow ellipsis">{ev.title}</span>
+            {meet && !past && (
+              <a className="icon-btn" href={meet} target="_blank" rel="noreferrer" title="Entrar no Google Meet" aria-label="Entrar no Google Meet" onClick={(e) => e.stopPropagation()}>
+                <Video size={14} />
+              </a>
+            )}
+          </div>
+        );
+      })}
+      {gcal.checked && gcal.configured && !gcal.connected && (
+        <div className="muted" style={{ fontSize: 12.5, marginTop: 6 }}>
+          <a className="link" href="#/agenda">
+            Conectar Google Agenda
+          </a>{" "}
+          para ver seus compromissos aqui.
+        </div>
+      )}
+    </section>
   );
 }
 

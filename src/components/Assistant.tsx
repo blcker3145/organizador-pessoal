@@ -1,4 +1,4 @@
-import { CheckSquare, Clapperboard, FileText, Loader2, Mic, Palette, Send, Sparkles, Trash2, Wallet, X, CheckCheck } from "lucide-react";
+import { CheckSquare, Clapperboard, FileText, Loader2, Mic, Palette, Send, Sparkles, Trash2, Wallet, X, CheckCheck, CalendarDays } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { AiError, providerLabel, useAiProvider, type ChatMessage } from "../lib/ai";
 import { runAssistant, type CreatedItem } from "../lib/assistant";
@@ -25,6 +25,7 @@ const SUGGESTIONS = [
   "Crie um criativo carrossel com 5 erros de identidade visual",
   "Anote uma ideia de vídeo: gameplay de Minecraft de fundo falando de mercado de trabalho",
   "Gastei 45 reais no almoço hoje",
+  "Marque uma reunião com a Ana amanhã às 15h com Google Meet",
 ];
 
 const ICONS: Record<CreatedItem["kind"], React.ReactNode> = {
@@ -34,6 +35,7 @@ const ICONS: Record<CreatedItem["kind"], React.ReactNode> = {
   creative: <Palette size={13} />,
   note: <FileText size={13} />,
   transaction: <Wallet size={13} />,
+  event: <CalendarDays size={13} />,
 };
 
 const KIND_LABEL: Record<CreatedItem["kind"], string> = {
@@ -43,6 +45,7 @@ const KIND_LABEL: Record<CreatedItem["kind"], string> = {
   creative: "Criativo criado",
   note: "Nota criada",
   transaction: "Lançamento registrado",
+  event: "Evento criado",
 };
 
 export function AssistantDrawer() {

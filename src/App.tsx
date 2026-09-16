@@ -9,6 +9,7 @@ import { MobileNav, Sidebar } from "./components/Sidebar";
 import { TaskDrawer } from "./components/TaskDrawer";
 import { useApp } from "./lib/store";
 import { ui, uiStore, useRoute } from "./lib/ui";
+import { CalendarPage } from "./pages/Calendar";
 import { CreativePage } from "./pages/CreativePage";
 import { CreativesPage } from "./pages/Creatives";
 import { FinancePage } from "./pages/Finance";
@@ -70,6 +71,8 @@ function Router() {
   const { parts } = useRoute();
   const [section, id] = parts;
   switch (section) {
+    case "agenda":
+      return <CalendarPage />;
     case "tarefas":
       return <TasksPage />;
     case "ideias":

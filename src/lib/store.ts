@@ -30,7 +30,7 @@ export function normalizeState(raw: unknown): AppState | null {
 export const appStore = createStore<AppState>(emptyState());
 export const useApp = appStore.use;
 
-type Collection = "tasks" | "projects" | "notes" | "videos" | "creatives" | "scriptTemplates" | "habits" | "routines" | "categories" | "transactions" | "bills" | "goals";
+type Collection = "tasks" | "projects" | "notes" | "videos" | "creatives" | "events" | "scriptTemplates" | "habits" | "routines" | "categories" | "transactions" | "bills" | "goals";
 type ItemOf<K extends Collection> = AppState[K][number];
 
 const update = (fn: (s: AppState) => AppState) => appStore.set(fn);

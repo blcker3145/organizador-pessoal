@@ -223,6 +223,35 @@ export interface MonthBudget {
   limits: Record<string, number>;
 }
 
+/* ---------- Agenda ---------- */
+export type RepeatRule = "none" | "daily" | "weekdays" | "weekly" | "monthly" | "yearly";
+
+/** Evento guardado no próprio Organizador (sem Google). */
+export interface LocalEvent {
+  id: string;
+  title: string;
+  allDay: boolean;
+  /** "YYYY-MM-DDTHH:mm" (hora local) ou "YYYY-MM-DD" quando allDay */
+  start: string;
+  end: string;
+  location: string;
+  description: string;
+  color: string;
+  repeat: RepeatRule;
+  repeatUntil: string | null;
+  reminders: number[];
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface CalendarPrefs {
+  /** ids de agendas escondidas (Google e do app) */
+  hidden: string[];
+  /** agenda padrão para novos eventos */
+  defaultCalendarId: string;
+  view: "day" | "week" | "month" | "agenda";
+}
+
 /* ---------- Estado ---------- */
 export type FavoriteKind = "note" | "video" | "creative";
 
@@ -246,4 +275,6 @@ export interface AppState {
   goals: Goal[];
   budgets: Record<string, MonthBudget>;
   favorites: { kind: FavoriteKind; id: string }[];
+  events: LocalEvent[];
+  calendarPrefs: CalendarPrefs;
 }

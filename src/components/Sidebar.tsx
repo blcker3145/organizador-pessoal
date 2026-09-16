@@ -1,5 +1,6 @@
 import {
   CalendarCheck,
+  CalendarDays,
   CheckSquare,
   Clapperboard,
   FileText,
@@ -23,6 +24,7 @@ import { cx } from "../lib/util";
 
 export const MODULES: { path: string; label: string; icon: ReactNode }[] = [
   { path: "/hoje", label: "Hoje", icon: <Sun size={16} /> },
+  { path: "/agenda", label: "Agenda", icon: <CalendarDays size={16} /> },
   { path: "/tarefas", label: "Tarefas", icon: <CheckSquare size={16} /> },
   { path: "/ideias", label: "Ideias & Notas", icon: <Lightbulb size={16} /> },
   { path: "/videos", label: "Vídeos", icon: <Clapperboard size={16} /> },
@@ -102,7 +104,7 @@ export function MobileNav() {
     { path: "/hoje", label: "Hoje", icon: <Home size={20} /> },
     { path: "/tarefas", label: "Tarefas", icon: <CheckSquare size={20} /> },
   ];
-  const inMore = ["/videos", "/criativos", "/habitos", "/rotina", "/financas", "/config", "/mais"].some((p) => isActive(path, p));
+  const inMore = ["/agenda", "/videos", "/criativos", "/habitos", "/rotina", "/financas", "/config", "/mais"].some((p) => isActive(path, p));
   return (
     <nav className="mobile-nav" aria-label="Navegação">
       {items.map((it) => (

@@ -1,8 +1,8 @@
 # Organizador pessoal
 
-App web de organização pessoal no estilo Notion: Hoje, Tarefas, Ideias & Notas, Vídeos (pipeline + roteiro), Criativos (planejamento de peças de design), Hábitos, Rotina e Finanças.
+App web de organização pessoal no estilo Notion: Hoje, Agenda (integrada ao Google Agenda), Tarefas, Ideias & Notas, Vídeos (pipeline + roteiro), Criativos (planejamento de peças de design), Hábitos, Rotina e Finanças.
 
-Front-end em React + TypeScript + Vite. Login, dados de cada conta e IA (ChatGPT) pelo Supabase: veja [SUPABASE.md](SUPABASE.md) para configurar.
+Front-end em React + TypeScript + Vite. Login, dados de cada conta e IA (Gemini ou ChatGPT) pelo Supabase: veja [SUPABASE.md](SUPABASE.md) para configurar.
 
 Site publicado: https://blcker3145.github.io/organizador-pessoal/
 
@@ -22,6 +22,7 @@ Abra http://localhost:5173.
 - `N`: captura rápida (fora de campos de texto)
 - `/` no editor: títulos, listas, checklist, citação, divisor
 - `Esc`: fecha janela ou painel
+- Na Agenda: `C` cria evento, `T` volta para hoje, `D`/`W`/`M`/`A` trocam a visualização, setas navegam
 
 ## Estrutura
 

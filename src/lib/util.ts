@@ -62,3 +62,8 @@ export function textBlock(text = "", type: Block["type"] = "p"): Block {
 export function plural(n: number, one: string, many: string): string {
   return `${n} ${n === 1 ? one : many}`;
 }
+
+/** Primeira letra maiúscula ("setembro de 2026" → "Setembro de 2026"). */
+export function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}

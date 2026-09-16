@@ -27,6 +27,8 @@ export function emptyState(): AppState {
     goals: [],
     budgets: {},
     favorites: [],
+    events: [],
+    calendarPrefs: { hidden: [], defaultCalendarId: "primary", view: "week" },
   };
 }
 
