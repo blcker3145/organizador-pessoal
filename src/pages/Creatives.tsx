@@ -66,7 +66,7 @@ export function CreativesPage() {
   );
 
   return (
-    <div className={cx("page wide", view === "pipeline" && "page-board")} style={view === "pipeline" ? undefined : { maxWidth: 1500 }}>
+    <div className="page wide crv-page">
       <div className="crv-top">
         <div className="page-head">
           <div>
@@ -96,6 +96,8 @@ export function CreativesPage() {
         )}
       </div>
 
+      {/* só esta área rola; o cabeçalho acima fica sempre no mesmo lugar */}
+      <div className={cx("crv-body", view === "pipeline" && "is-board")} key={view}>
       {view === "pipeline" && <CreativeBoardView creatives={creatives} />}
       {view === "galeria" && <Gallery creatives={creatives} />}
       {view === "calendario" && (
@@ -120,6 +122,7 @@ export function CreativesPage() {
         />
       )}
       {view === "tabela" && <CreativeTable creatives={creatives} />}
+      </div>
     </div>
   );
 }

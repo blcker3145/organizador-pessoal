@@ -16,11 +16,15 @@
   --tcol-muted: #9fadbc;
 }
 
-/* topo fixo: no quadro só as listas rolam */
-.page.page-board { max-width: none; height: 100%; display: flex; flex-direction: column; padding-bottom: 12px; overflow: hidden; }
-.page-board .page-head { margin-bottom: 12px; }
-.page-board .tabs { margin-bottom: 12px; }
+/* topo fixo: em todas as abas só o conteúdo rola */
+.page.crv-page { max-width: none; height: 100%; display: flex; flex-direction: column; padding-bottom: 0; overflow: hidden; }
+.crv-body { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding-bottom: 32px; margin: 0 -8px; padding-left: 8px; padding-right: 8px; }
+.crv-body.is-board { overflow: hidden; display: flex; flex-direction: column; padding-bottom: 12px; }
+/* mesmo cabeçalho em todas as abas: nada muda de lugar ao trocar de visualização */
 .crv-top { position: sticky; top: 0; z-index: 6; background: var(--bg); flex: none; }
+.crv-top .page-head { margin-bottom: 12px; min-height: 58px; }
+.crv-top .tabs { margin-bottom: 12px; }
+.crv-top .tb-row { min-height: 46px; }
 
 .tb-row {
   display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden;
@@ -231,7 +235,9 @@
   .tb-btn.icon { padding: 0 10px; }
 }
 @media (max-width: 800px) {
-  .page.page-board { height: auto; min-height: 100%; overflow: visible; }
+  .page.crv-page { height: auto; min-height: 100%; overflow: visible; }
+  .crv-body { overflow: visible; padding-bottom: 110px; }
+  .crv-body.is-board { overflow: visible; }
   .tb-row { margin-right: -16px; padding-right: 16px; }
   .tboard { min-height: 0; height: min(72dvh, 600px); scroll-snap-type: x mandatory; }
   .tcol { width: 84vw; max-width: 300px; scroll-snap-align: start; }

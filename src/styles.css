@@ -180,7 +180,8 @@ a { color: inherit; }
   border-bottom: 2px solid transparent; white-space: nowrap; display: inline-flex; gap: 6px; align-items: center;
 }
 .tab:hover { color: var(--text); }
-.tab.on { color: var(--text); border-color: var(--text); font-weight: 500; }
+/* sem mudar o peso da fonte: as abas não mudam de largura ao trocar */
+.tab.on { color: var(--text); border-color: var(--text); text-shadow: 0 0 0.45px currentColor; }
 
 .pill {
   display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 7px; border-radius: 4px;
