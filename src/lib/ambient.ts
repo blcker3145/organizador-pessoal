@@ -153,10 +153,47 @@ function build(ac: AudioContext, id: string, out: AudioNode) {
   }
 }
 
+/* ---------- player incorporado (YouTube): volume e pausa pela API do iframe ---------- */
+
+let embedFrame: HTMLIFrameElement | null = null;
+let embedVolume = 0.6;
+let embedPaused = false;
+
+function ytCommand(func: string, args: unknown[] = []) {
+  const f = embedFrame;
+  if (!f?.contentWindow || !/youtube/.test(f.src)) return;
+  f.contentWindow.postMessage(JSON.stringify({ event: "command", func, args }), "*");
+}
+
+function syncEmbed() {
+  ytCommand(embedVolume > 0 ? "unMute" : "mute");
+  ytCommand("setVolume", [Math.round(embedVolume * 100)]);
+  ytCommand(embedPaused ? "pauseVideo" : "playVideo");
+}
+
+/** O player global avisa qual iframe está tocando. */
+export function registerEmbed(frame: HTMLIFrameElement | null) {
+  embedFrame = frame;
+  if (!frame) return;
+  // o YouTube só conversa depois de carregar: pede os eventos e reaplica volume/pausa algumas vezes
+  frame.addEventListener("load", () => {
+    frame.contentWindow?.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), "*");
+    [400, 1500, 4000].forEach((ms) => window.setTimeout(() => embedFrame === frame && syncEmbed(), ms));
+  });
+}
+
+function setEmbedPaused(paused: boolean) {
+  if (embedPaused === paused) return;
+  embedPaused = paused;
+  ytCommand(paused ? "pauseVideo" : "playVideo");
+}
+
 export function startAmbient(id: string, volume: number) {
+  embedVolume = volume;
   if (current === id && master) return setAmbientVolume(volume);
   stopAmbient();
-  if (!id || id === "none" || isEmbedSound(id)) return;
+  if (isEmbedSound(id)) return setEmbedPaused(false);
+  if (!id || id === "none") return;
   const ac = audio();
   master = ac.createGain();
   master.gain.setValueAtTime(0, ac.currentTime);
@@ -167,11 +204,15 @@ export function startAmbient(id: string, volume: number) {
 }
 
 export function setAmbientVolume(volume: number) {
+  embedVolume = volume;
+  ytCommand(volume > 0 ? "unMute" : "mute");
+  ytCommand("setVolume", [Math.round(volume * 100)]);
   if (!ctx || !master) return;
   master.gain.setTargetAtTime(volume * 0.5, ctx.currentTime, 0.08);
 }
 
 export function stopAmbient() {
+  setEmbedPaused(true);
   timers.forEach((t) => window.clearTimeout(t));
   timers = [];
   const m = master;
@@ -230,20 +271,33 @@ export function playChime(volume = 0.6) {
   }
 }
 
+/**
+ * Rádios ao vivo do canal oficial Lofi Girl (youtube.com/@LofiGirl), em ordem de preferência.
+ * Se uma sair do ar, o player passa para a próxima.
+ */
+export const LOFI_STREAMS = [
+  "rFZHOHl-L8A", // lofi hip hop radio 📚 beats to relax/study to
+  "jfKfPfyJRdk", // endereço antigo da mesma rádio
+  "CwPCy1GLS38", // sad lofi radio ☔ beats for rainy days
+  "0muHFBSiybw", // summer lofi radio ☀️
+];
+
+const withApi = (url: string) => `${url}&enablejsapi=1&origin=${encodeURIComponent(location.origin)}`;
+
 /** Converte um link do YouTube ou Spotify no endereço do player incorporado. */
-export function embedUrl(id: string, custom: string): string | null {
-  if (id === "lofi") return "https://www.youtube-nocookie.com/embed/jfKfPfyJRdk?autoplay=1&rel=0";
+export function embedUrl(id: string, custom: string, lofiIndex = 0): string | null {
+  if (id === "lofi") return withApi(`https://www.youtube.com/embed/${LOFI_STREAMS[lofiIndex % LOFI_STREAMS.length]}?autoplay=1&rel=0`);
   if (id !== "custom" || !custom.trim()) return null;
   try {
     const u = new URL(custom.trim());
-    if (/youtu\.be$/.test(u.hostname)) return `https://www.youtube-nocookie.com/embed/${u.pathname.slice(1)}?autoplay=1&rel=0`;
+    if (/youtu\.be$/.test(u.hostname)) return withApi(`https://www.youtube-nocookie.com/embed/${u.pathname.slice(1)}?autoplay=1&rel=0`);
     if (/youtube\.com$/.test(u.hostname)) {
       const list = u.searchParams.get("list");
       const v = u.searchParams.get("v");
-      if (v) return `https://www.youtube-nocookie.com/embed/${v}?autoplay=1&rel=0${list ? `&list=${list}` : ""}`;
-      if (list) return `https://www.youtube-nocookie.com/embed/videoseries?list=${list}&autoplay=1`;
+      if (v) return withApi(`https://www.youtube-nocookie.com/embed/${v}?autoplay=1&rel=0${list ? `&list=${list}` : ""}`);
+      if (list) return withApi(`https://www.youtube-nocookie.com/embed/videoseries?list=${list}&autoplay=1`);
       const m = u.pathname.match(/\/(?:live|embed|shorts)\/([\w-]+)/);
-      if (m) return `https://www.youtube-nocookie.com/embed/${m[1]}?autoplay=1&rel=0`;
+      if (m) return withApi(`https://www.youtube-nocookie.com/embed/${m[1]}?autoplay=1&rel=0`);
     }
     if (/open\.spotify\.com$/.test(u.hostname)) {
       const m = u.pathname.match(/\/(playlist|album|track|artist|episode|show)\/(\w+)/);

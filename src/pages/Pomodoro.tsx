@@ -3,7 +3,8 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { LavaCanvas } from "../components/LavaCanvas";
 import { NeuronLogo } from "../components/Logo";
 import { Checkbox } from "../components/common";
-import { AMBIENTS, ambientPlaying, embedUrl, isEmbedSound, setAmbientVolume, startAmbient, stopAmbient } from "../lib/ambient";
+import { PLAYER_SLOT } from "../components/PomodoroPlayer";
+import { AMBIENTS, ambientPlaying, embedUrl, isEmbedSound, startAmbient, stopAmbient } from "../lib/ambient";
 import { today } from "../lib/dates";
 import {
   focusStats,
@@ -13,6 +14,7 @@ import {
   setImmersive,
   setMode,
   setTask,
+  setVolume,
   skip,
   syncIdleDuration,
   timeLeft,
@@ -138,7 +140,7 @@ function Stage() {
               </button>
             ))}
             <span className="glass-sep" />
-            <button className="glass-btn xs" onClick={() => setPrefs({ volume: muted ? 0.6 : 0 })} aria-label={muted ? "Ativar som" : "Silenciar"}>
+            <button className="glass-btn xs" onClick={() => setVolume(muted ? 0.6 : 0)} aria-label={muted ? "Ativar som" : "Silenciar"}>
               {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
             </button>
             <input
@@ -151,26 +153,15 @@ function Stage() {
               aria-label="Volume"
               onChange={(e) => {
                 const v = Number(e.target.value);
-                setPrefs({ volume: v });
-                setAmbientVolume(v);
+                setVolume(v);
               }}
             />
           </div>
         </div>
       )}
 
-      {embed && (
-        <div className={cx("pomo-player glass", !t.immersive && "inline")}>
-          <iframe
-            key={embed}
-            src={embed}
-            title="Música"
-            allow="autoplay; encrypted-media; picture-in-picture"
-            loading="lazy"
-            referrerPolicy="strict-origin-when-cross-origin"
-          />
-        </div>
-      )}
+      {/* o player de verdade é global (continua tocando em outras páginas) e se encaixa aqui */}
+      {embed && <div className={cx("pomo-player glass", PLAYER_SLOT, !t.immersive && "inline")} />}
     </section>
   );
 }
@@ -317,8 +308,7 @@ export function PomodoroPage() {
                 aria-label="Volume"
                 onChange={(e) => {
                   const v = Number(e.target.value);
-                  setPrefs({ volume: v });
-                  setAmbientVolume(v);
+                  setVolume(v);
                 }}
               />
             </span>

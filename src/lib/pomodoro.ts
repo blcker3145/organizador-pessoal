@@ -1,6 +1,6 @@
 /* Pomodoro: cronômetro global (continua ao trocar de página), ciclos e histórico. */
 import { useEffect, useState } from "react";
-import { stopAmbient, startAmbient, playChime } from "./ambient";
+import { stopAmbient, startAmbient, playChime, setAmbientVolume } from "./ambient";
 import { createStore } from "./createStore";
 import { today } from "./dates";
 import { appStore, setState } from "./store";
@@ -124,6 +124,12 @@ export function reset() {
 export function skip() {
   const s = timerStore.get();
   advance(s.mode === "focus" ? s.cycle + 1 : s.cycle, false);
+}
+
+/** Volume dos sons e da música (0 a 1), de qualquer lugar do app. */
+export function setVolume(volume: number) {
+  setState((s) => ({ ...s, pomodoroPrefs: { ...s.pomodoroPrefs, volume } }));
+  setAmbientVolume(volume);
 }
 
 export function setTask(taskId: string | null) {

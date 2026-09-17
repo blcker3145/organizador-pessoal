@@ -12,6 +12,7 @@ import { ui, uiStore, useRoute } from "./lib/ui";
 import { CalendarPage } from "./pages/Calendar";
 import { PomodoroPage } from "./pages/Pomodoro";
 import { PomodoroMini } from "./components/PomodoroMini";
+import { PomodoroPlayer } from "./components/PomodoroPlayer";
 import { CreativePage } from "./pages/CreativePage";
 import { CreativesPage } from "./pages/Creatives";
 import { FinancePage } from "./pages/Finance";
@@ -137,6 +138,7 @@ function Workspace() {
       </main>
       <MobileNav />
       <PomodoroMini />
+      <PomodoroPlayer />
       <TaskDrawer />
       <AssistantDrawer />
       <QuickCaptureModal />
