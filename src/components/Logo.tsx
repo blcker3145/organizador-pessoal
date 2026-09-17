@@ -1,23 +1,18 @@
-/** Logo do Organizador: neurônio em traço de circuito, branco sobre fundo escuro (mesmo desenho do favicon). */
+/** Logo do Organizador: neurônio branco de formas orgânicas sobre fundo escuro (mesmo desenho do favicon). */
 export function NeuronLogo({ size = 24, className }: { size?: number; className?: string }) {
   return (
     <svg className={className} width={size} height={size} viewBox="0 0 64 64" role="img" aria-label="Organizador">
       <rect width="64" height="64" rx="14" fill="#0a0a0c" />
-      <g fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="32" cy="32" r="7" />
-        <path d="M27 27 L21 21 V14" />
-        <path d="M37 27 L43 21 H49" />
-        <path d="M25 32 H15" />
-        <path d="M27 37 L21 43" />
-        <path d="M37 37 L45 45 V50" />
-      </g>
-      <g fill="#fff">
-        <circle cx="32" cy="32" r="2.6" />
-        <circle cx="21" cy="12" r="2.6" />
-        <circle cx="51" cy="21" r="2.6" />
-        <circle cx="13" cy="32" r="2.6" />
-        <circle cx="19.5" cy="44.5" r="2.6" />
-        <circle cx="45" cy="52" r="2.6" />
+      <g fill="#fff" transform="translate(32.8 32.4) scale(0.9)">
+        <circle cx="0" cy="0" r="6" />
+        <path transform="rotate(-150)" d="M0 -7.55 C5.4 -5.55 7 -2.05 13 -2.05 L23.95 -2.05 A2.05 2.05 0 0 1 23.95 2.05 L13 2.05 C7 2.05 5.4 5.55 0 7.55 Z" />
+        <path transform="rotate(-90)" d="M0 -6.15 C5.4 -4.15 7 -2.05 10.2 -2.05 L15.95 -2.05 A2.05 2.05 0 0 1 15.95 2.05 L10.2 2.05 C7 2.05 5.4 4.15 0 6.15 Z" />
+        <path transform="rotate(-60)" d="M0 -6.95 C5.4 -4.95 7 -2.05 11.8 -2.05 L18.95 -2.05 A2.05 2.05 0 0 1 18.95 2.05 L11.8 2.05 C7 2.05 5.4 4.95 0 6.95 Z" />
+        <path transform="rotate(0)" d="M0 -6.35 C5.4 -4.35 7 -2.05 10.6 -2.05 L18.45 -2.05 A2.05 2.05 0 0 1 18.45 2.05 L10.6 2.05 C7 2.05 5.4 4.35 0 6.35 Z" />
+        <path transform="rotate(30)" d="M0 -7.25 C5.4 -5.25 7 -2.05 12.4 -2.05 L15.45 -2.05 A2.05 2.05 0 0 1 15.45 2.05 L12.4 2.05 C7 2.05 5.4 5.25 0 7.25 Z" />
+        <path transform="rotate(90)" d="M0 -6.15 C5.4 -4.15 7 -2.05 10.2 -2.05 L16.45 -2.05 A2.05 2.05 0 0 1 16.45 2.05 L10.2 2.05 C7 2.05 5.4 4.15 0 6.15 Z" />
+        <path transform="rotate(120)" d="M0 -7.55 C5.4 -5.55 7 -2.05 13 -2.05 L22.95 -2.05 A2.05 2.05 0 0 1 22.95 2.05 L13 2.05 C7 2.05 5.4 5.55 0 7.55 Z" />
+        <path transform="rotate(180)" d="M0 -6.25 C5.4 -4.25 7 -2.05 10.4 -2.05 L14.45 -2.05 A2.05 2.05 0 0 1 14.45 2.05 L10.4 2.05 C7 2.05 5.4 4.25 0 6.25 Z" />
       </g>
     </svg>
   );
