@@ -113,64 +113,9 @@
 .on-light .pomo-dots i { mix-blend-mode: normal; background: rgba(0, 0, 0, 0.2); }
 .on-light .pomo-dots i.on { background: #0a0a0c; }
 
-/* ---------- líquido ---------- */
-.liquid {
-  /* z-index 0: o conteúdo seguinte fica por cima e pode se misturar com o líquido */
-  position: absolute; left: -4%; right: -4%; bottom: 0; z-index: 0; pointer-events: none;
-  filter: drop-shadow(0 -10px 30px rgba(255, 255, 255, 0.28));
-}
-.liquid-body {
-  position: absolute; inset: 0; overflow: hidden;
-  background:
-    linear-gradient(90deg, rgba(0, 0, 0, 0.1) 0%, transparent 12%, transparent 88%, rgba(0, 0, 0, 0.12) 100%),
-    linear-gradient(180deg, #ffffff 0%, #f6f6f8 22%, #e4e4ea 70%, #cfcfd7 100%);
-  box-shadow: inset 0 24px 40px -20px #fff, inset 0 -60px 90px -40px rgba(0, 0, 0, 0.22);
-}
-.liquid-body::before {
-  /* reflexo vertical, dá volume de vidro */
-  content: ""; position: absolute; top: 0; bottom: 0; left: 14%; width: 16%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85), transparent);
-  filter: blur(8px); opacity: 0.7;
-}
-.liquid-body::after {
-  content: ""; position: absolute; inset: 0;
-  background: radial-gradient(60% 40% at 70% 0%, rgba(255, 255, 255, 0.9), transparent 70%);
-}
-.wave {
-  position: absolute; left: 0; bottom: calc(100% - 1px); width: 200%; height: 26px;
-  background-repeat: repeat-x; background-size: 50% 100%;
-  animation: wave-x 7s linear infinite;
-}
-.wave.front {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 26' preserveAspectRatio='none'%3E%3Cpath d='M0 13 C100 0 300 0 400 13 C500 26 700 26 800 13 V26 H0Z' fill='%23ffffff'/%3E%3C/svg%3E");
-}
-.wave.back {
-  height: 34px; opacity: 0.45; animation-duration: 11s; animation-direction: reverse;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 34' preserveAspectRatio='none'%3E%3Cpath d='M0 20 C120 2 280 2 400 18 C520 34 680 30 800 20 V34 H0Z' fill='%23ffffff'/%3E%3C/svg%3E");
-}
-@keyframes wave-x { to { transform: translateX(-50%); } }
-.liquid.calm { transition: height 700ms var(--ease-ios, ease); }
-.liquid.calm .wave { animation-duration: 16s; }
-.liquid.calm .wave.back { animation-duration: 22s; }
-
-.lq-bubble {
-  position: absolute; bottom: -12px; border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.95), rgba(210, 210, 220, 0.4) 60%, rgba(0, 0, 0, 0.08));
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
-  animation: bubble-up 9s ease-in infinite;
-}
-.lq-bubble.b1 { left: 12%; width: 10px; height: 10px; animation-delay: 0s; }
-.lq-bubble.b2 { left: 34%; width: 6px; height: 6px; animation-delay: 2.4s; animation-duration: 7s; }
-.lq-bubble.b3 { left: 58%; width: 12px; height: 12px; animation-delay: 4.1s; animation-duration: 11s; }
-.lq-bubble.b4 { left: 76%; width: 7px; height: 7px; animation-delay: 1.2s; }
-.lq-bubble.b5 { left: 90%; width: 9px; height: 9px; animation-delay: 5.6s; animation-duration: 8s; }
-@keyframes bubble-up {
-  0% { transform: translate(0, 0); opacity: 0; }
-  10% { opacity: 1; }
-  50% { transform: translate(6px, -45vh); }
-  100% { transform: translate(-4px, -90vh); opacity: 0; }
-}
-.liquid.calm .lq-bubble { animation-play-state: paused; opacity: 0; }
+/* ---------- líquido (canvas) ---------- */
+/* z-index 0: o conteúdo seguinte fica por cima e pode se misturar com o líquido */
+.liquid-canvas { position: absolute; inset: 0; z-index: 0; pointer-events: none; display: block; }
 
 /* ---------- abaixo do palco ---------- */
 .pomo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 18px; }
@@ -242,6 +187,5 @@
   .pomo-modes button { flex: 1; padding: 5px 8px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .wave, .lq-bubble, .pomo-orb svg, .glass-btn.primary, .sound-art i { animation: none !important; }
-  .liquid { transition: none; }
+  .pomo-orb svg, .glass-btn.primary, .sound-art i { animation: none !important; }
 }

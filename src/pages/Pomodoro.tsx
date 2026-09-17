@@ -1,5 +1,6 @@
 import { Bell, Link2, Maximize2, Minimize2, Pause, Play, RotateCcw, SkipForward, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { LiquidCanvas } from "../components/LiquidCanvas";
 import { NeuronLogo } from "../components/Logo";
 import { Checkbox } from "../components/common";
 import { AMBIENTS, ambientPlaying, embedUrl, isEmbedSound, setAmbientVolume, startAmbient, stopAmbient } from "../lib/ambient";
@@ -29,24 +30,6 @@ function usePrefs() {
   const prefs = useApp().pomodoroPrefs;
   const set = (p: Partial<PomodoroPrefs>) => setState((s) => ({ ...s, pomodoroPrefs: { ...s.pomodoroPrefs, ...p } }));
   return [prefs, set] as const;
-}
-
-/* ---------- líquido ---------- */
-
-function Liquid({ fill, calm }: { fill: number; calm: boolean }) {
-  return (
-    <div className={cx("liquid", calm && "calm")} style={{ height: `${(fill * 100).toFixed(3)}%` }} aria-hidden>
-      <div className="wave back" />
-      <div className="wave front" />
-      <div className="liquid-body">
-        <span className="lq-bubble b1" />
-        <span className="lq-bubble b2" />
-        <span className="lq-bubble b3" />
-        <span className="lq-bubble b4" />
-        <span className="lq-bubble b5" />
-      </div>
-    </div>
-  );
 }
 
 /* ---------- palco (cartão e tela cheia) ---------- */
@@ -98,7 +81,7 @@ function Stage() {
 
   return (
     <section ref={stageRef} className={cx("pomo-stage", t.immersive && "full", running && "running", `mode-${t.mode}`)} aria-label="Cronômetro Pomodoro">
-      <Liquid fill={fill} calm={!running} />
+      <LiquidCanvas fill={fill} calm={!running} hostRef={stageRef} />
 
       <header className="pomo-top" ref={topRef}>
         <span className="glass-chip">
