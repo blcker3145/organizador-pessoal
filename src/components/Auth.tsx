@@ -1,3 +1,4 @@
+import { NeuronLogo } from "./Logo";
 import { Cloud, CloudOff, Loader2, LogOut } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { cx } from "../lib/util";
@@ -8,7 +9,7 @@ function AuthCard({ title, subtitle, children }: { title: string; subtitle?: Rea
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-brand">
-          <span className="logo">O</span> Organizador
+          <NeuronLogo size={28} className="brand-logo" /> Organizador
         </div>
         <h1>{title}</h1>
         {subtitle && <p className="muted">{subtitle}</p>}

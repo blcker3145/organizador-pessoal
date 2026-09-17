@@ -93,10 +93,7 @@ a { color: inherit; }
   overflow-y: auto;
 }
 .side-ws { display: flex; align-items: center; gap: 8px; padding: 6px 10px 12px; font-weight: 600; }
-.side-ws .logo {
-  width: 22px; height: 22px; border-radius: 5px; background: var(--text); color: var(--bg);
-  display: grid; place-items: center; font-size: 12px; font-weight: 700;
-}
+.brand-logo { flex: none; display: block; border-radius: 6px; box-shadow: 0 0 0 1px var(--line); }
 .side-item {
   display: flex; align-items: center; gap: 8px; width: 100%;
   padding: 5px 10px; border: 0; border-radius: 6px; background: transparent;
@@ -524,7 +521,6 @@ button.pill { cursor: pointer; }
 .auth-card h1 { font-size: 24px; margin: 4px 0 0; }
 .auth-card > p { margin: -6px 0 0; font-size: 14px; }
 .auth-brand { display: flex; align-items: center; gap: 8px; font-weight: 600; }
-.auth-brand .logo { width: 24px; height: 24px; border-radius: 6px; background: var(--text); color: var(--bg); display: grid; place-items: center; font-size: 13px; font-weight: 700; }
 .auth-submit { height: 38px; justify-content: center; font-size: 14.5px; }
 .auth-links { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 13.5px; }
 .auth-info { background: var(--green-soft); color: var(--green); border-radius: 6px; padding: 8px 10px; font-size: 13.5px; }

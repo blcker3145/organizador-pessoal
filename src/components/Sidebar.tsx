@@ -1,3 +1,4 @@
+import { NeuronLogo } from "./Logo";
 import {
   CalendarCheck,
   CalendarDays,
@@ -59,7 +60,7 @@ export function Sidebar() {
   return (
     <nav className="sidebar" aria-label="Navegação principal">
       <div className="side-ws">
-        <span className="logo">{(state.profile.name || "M")[0].toUpperCase()}</span>
+        <NeuronLogo size={24} className="brand-logo" />
         <span className="ellipsis">{state.profile.name ? `Espaço de ${state.profile.name}` : "Meu espaço"}</span>
       </div>
       <button className="side-item" onClick={ui.openPalette}>
