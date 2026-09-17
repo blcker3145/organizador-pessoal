@@ -1,4 +1,5 @@
 import { ChevronRight, Search, Settings, Sparkles } from "lucide-react";
+import { AlertsBell } from "../components/Alerts";
 import { MODULES } from "../components/Sidebar";
 import { AccountBox } from "../components/Auth";
 import { ui } from "../lib/ui";
@@ -20,6 +21,9 @@ export function MorePage() {
             </a>
           </div>
         ))}
+        <div style={{ padding: 0 }}>
+          <AlertsBell label />
+        </div>
         <div style={{ padding: 0 }}>
           <button className="side-item" style={{ minHeight: 48, color: "var(--text)" }} onClick={ui.openAssistant}>
             <Sparkles size={16} />

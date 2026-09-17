@@ -330,6 +330,13 @@ export interface PomodoroSession {
 /* ---------- Estado ---------- */
 export type FavoriteKind = "note" | "video" | "creative";
 
+/** Avisos de prazo: janela em dias, quais já foram lidos e se avisa no computador. */
+export interface AlertSettings {
+  days: number;
+  read: string[];
+  desktop: boolean;
+}
+
 export interface AppState {
   version: number;
   profile: { name: string };
@@ -355,4 +362,5 @@ export interface AppState {
   calendarPrefs: CalendarPrefs;
   pomodoroPrefs: PomodoroPrefs;
   pomodoroLog: PomodoroSession[];
+  alerts: AlertSettings;
 }

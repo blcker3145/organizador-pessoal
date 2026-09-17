@@ -3,6 +3,18 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "re
 import type { Priority, TaskStatus, VideoStage } from "../lib/types";
 import { cx } from "../lib/util";
 
+/** Interruptor de ligar/desligar com rótulo. */
+export function Switch({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
+  return (
+    <button type="button" role="switch" aria-checked={checked} className={cx("ee-switch", checked && "on")} onClick={() => onChange(!checked)}>
+      <span className="ee-switch-track">
+        <span className="ee-switch-thumb" />
+      </span>
+      {label}
+    </button>
+  );
+}
+
 export function Checkbox({
   checked,
   onChange,

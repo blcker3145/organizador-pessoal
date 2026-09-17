@@ -1,3 +1,5 @@
+import { AlertsBell } from "./Alerts";
+import { useAlerts } from "../lib/alerts";
 import { NeuronLogo } from "./Logo";
 import {
   CalendarCheck,
@@ -68,9 +70,10 @@ export function Sidebar() {
     <nav className="sidebar" aria-label="Navegação principal">
       <div className="side-ws">
         <NeuronLogo size={24} className="brand-logo" />
-        <span className="ellipsis" title={user?.email || undefined}>
+        <span className="ellipsis grow" title={user?.email || undefined}>
           {displayName}
         </span>
+        <AlertsBell />
       </div>
       <button className="side-item" onClick={ui.openPalette}>
         <Search size={16} /> Buscar <kbd>Ctrl K</kbd>
@@ -110,6 +113,7 @@ export function Sidebar() {
 
 export function MobileNav() {
   const { path } = useRoute();
+  const { unread } = useAlerts();
   const items = [
     { path: "/hoje", label: "Hoje", icon: <Home size={20} /> },
     { path: "/tarefas", label: "Tarefas", icon: <CheckSquare size={20} /> },
@@ -132,7 +136,7 @@ export function MobileNav() {
         <Lightbulb size={20} />
         Ideias
       </a>
-      <button className={cx(inMore && "on")} onClick={() => navigate("/mais")}>
+      <button className={cx(inMore && "on", unread > 0 && "has-alert")} onClick={() => navigate("/mais")}>
         <MoreHorizontal size={20} />
         Mais
       </button>

@@ -38,7 +38,7 @@ import {
 import { validateDraft, type EditScope, type EventDraft } from "../../lib/calendarActions";
 import type { RepeatRule } from "../../lib/types";
 import { cx } from "../../lib/util";
-import { Modal, useEscape } from "../common";
+import { Modal, Switch, useEscape } from "../common";
 
 /** Texto puro da descrição do Google (que pode vir em HTML). */
 function plainText(html: string): string {
@@ -690,13 +690,3 @@ function FieldRow({ icon, label, labeled, children }: { icon: ReactNode; label: 
   );
 }
 
-function Switch({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
-  return (
-    <button type="button" role="switch" aria-checked={checked} className={cx("ee-switch", checked && "on")} onClick={() => onChange(!checked)}>
-      <span className="ee-switch-track">
-        <span className="ee-switch-thumb" />
-      </span>
-      {label}
-    </button>
-  );
-}
