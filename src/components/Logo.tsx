@@ -1,34 +1,24 @@
-/** Logo do Organizador: neurônio branco sobre fundo escuro (o mesmo desenho do favicon). */
+/** Logo do Organizador: neurônio em traço de circuito, branco sobre fundo escuro (mesmo desenho do favicon). */
 export function NeuronLogo({ size = 24, className }: { size?: number; className?: string }) {
   return (
     <svg className={className} width={size} height={size} viewBox="0 0 64 64" role="img" aria-label="Organizador">
-      <defs>
-        <radialGradient id="neuron-bg" cx="30%" cy="25%" r="90%">
-          <stop offset="0" stopColor="#26262c" />
-          <stop offset="1" stopColor="#08080a" />
-        </radialGradient>
-      </defs>
-      <rect width="64" height="64" rx="14" fill="url(#neuron-bg)" />
-      <g className="neuron-lines" fill="none" stroke="#fff" strokeLinecap="round" strokeLinejoin="round">
-        <path strokeWidth="3.2" d="M26.5 22 C25.5 17 23 13.5 19 9.5" />
-        <path strokeWidth="2.4" d="M22.6 14 L26 8.5" />
-        <path strokeWidth="3.2" d="M21.5 28 C16.5 27 12.5 25 8.5 21" />
-        <path strokeWidth="2.4" d="M13 24.8 L9.5 29.5" />
-        <path strokeWidth="3.2" d="M33.5 23 C36.5 18.5 40 15.5 45 13.5" />
-        <path strokeWidth="2.4" d="M39.6 16 L40.5 9.5" />
-        <path strokeWidth="3.2" d="M23.5 34 C20 38.5 16.5 41.5 11.5 43.5" />
-        <path strokeWidth="2.4" d="M17.4 40 L18.5 46.5" />
-        <path strokeWidth="2.6" d="M34 34 L48 48" />
-        <path strokeWidth="5" d="M37.2 37.2 L39.6 39.6 M42.4 42.4 L44.8 44.8" />
-        <path strokeWidth="2.4" d="M48 48 L56 49 M48 48 L50 56 M48 48 L54.5 54.5" />
+      <rect width="64" height="64" rx="14" fill="#0a0a0c" />
+      <g fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="32" cy="32" r="7" />
+        <path d="M27 27 L21 21 V14" />
+        <path d="M37 27 L43 21 H49" />
+        <path d="M25 32 H15" />
+        <path d="M27 37 L21 43" />
+        <path d="M37 37 L45 45 V50" />
       </g>
-      <g className="neuron-synapses" fill="#fff">
-        <circle cx="56" cy="49" r="2" />
-        <circle cx="50" cy="56" r="2" />
-        <circle cx="54.5" cy="54.5" r="2" />
+      <g fill="#fff">
+        <circle cx="32" cy="32" r="2.6" />
+        <circle cx="21" cy="12" r="2.6" />
+        <circle cx="51" cy="21" r="2.6" />
+        <circle cx="13" cy="32" r="2.6" />
+        <circle cx="19.5" cy="44.5" r="2.6" />
+        <circle cx="45" cy="52" r="2.6" />
       </g>
-      <circle className="neuron-soma" cx="28.5" cy="28.5" r="8" fill="#fff" />
-      <circle cx="28.5" cy="28.5" r="2.8" fill="#0b0b0e" />
     </svg>
   );
 }
