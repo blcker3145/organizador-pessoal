@@ -105,6 +105,13 @@
 .cal-side-backdrop { animation: fade-in 200ms ease both; }
 
 /* ---------- arrastar ---------- */
+.drag-float { position: fixed; left: 0; top: 0; z-index: 200; pointer-events: none; will-change: transform; }
+.drag-float > .drag-ghost { animation: lift 200ms var(--ease-out) both; margin: 0; }
+@keyframes lift { from { transform: none; box-shadow: none; } to { transform: rotate(2.5deg) scale(1.03); } }
+body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select: none !important; }
+.tcard { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.tcard img { -webkit-user-drag: none; }
+.tboard.dragging .tcard:hover { transform: none; }
 /* a cópia que acompanha o mouse: inclinada e com sombra, como um cartão erguido */
 .drag-ghost {
   transform: rotate(2.5deg) scale(1.03);

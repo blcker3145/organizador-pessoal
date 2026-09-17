@@ -16,12 +16,13 @@ import {
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { attachmentCount, checklistProgress, dueState, dueText, labelStyle, newColumn, sortCards } from "../../lib/board";
 import { imageFileToDataUrl } from "../../lib/creatives";
-import { liftDragImage, useFlip } from "../../lib/motion";
+import { useFlip } from "../../lib/motion";
 import { createCreative, deleteBoardColumn, moveCreative, patchCreative, setBoard, useApp } from "../../lib/store";
 import type { BoardColumn, BoardLabel, Creative } from "../../lib/types";
 import { navigate, ui } from "../../lib/ui";
 import { cx } from "../../lib/util";
 import { useEscape } from "../common";
+import { useBoardDrag, type DragState } from "./useBoardDrag";
 
 /* ---------- utilidades ---------- */
 
@@ -124,17 +125,13 @@ function Card({
   labels,
   dragging,
   dropBefore,
-  onDragStart,
-  onDragEnd,
-  onDragOverCard,
+  onPress,
 }: {
   c: Creative;
   labels: BoardLabel[];
   dragging: boolean;
   dropBefore: boolean;
-  onDragStart: () => void;
-  onDragEnd: () => void;
-  onDragOverCard: (e: React.DragEvent, after: boolean) => void;
+  onPress: (e: React.PointerEvent<HTMLElement>) => void;
 }) {
   const [broken, setBroken] = useState(false);
   const cardLabels = c.labelIds.map((id) => labels.find((l) => l.id === id)).filter((l): l is BoardLabel => !!l);
@@ -144,24 +141,14 @@ function Card({
       <div
         className={cx("tcard", dragging && "dragging", c.pinned && "pinned")}
         data-flip={c.id}
-        draggable
         role="button"
         tabIndex={0}
-        onDragStart={(e) => {
-          e.dataTransfer.setData("text/plain", c.id);
-          e.dataTransfer.effectAllowed = "move";
-          liftDragImage(e);
-          onDragStart();
-        }}
-        onDragEnd={onDragEnd}
-        onDragOver={(e) => {
-          const r = e.currentTarget.getBoundingClientRect();
-          onDragOverCard(e, e.clientY > r.top + r.height / 2);
-        }}
+        onPointerDown={onPress}
+        onDragStart={(e) => e.preventDefault()}
         onClick={() => navigate(`/criativos/${c.id}`)}
         onKeyDown={(e) => e.key === "Enter" && navigate(`/criativos/${c.id}`)}
       >
-        {c.cover && !broken && <img className="tcard-cover" src={c.cover} alt="" loading="lazy" onError={() => setBroken(true)} />}
+        {c.cover && !broken && <img className="tcard-cover" src={c.cover} alt="" loading="lazy" draggable={false} onError={() => setBroken(true)} />}
         {c.cover && broken && (
           <div className="tcard-cover broken">
             <ImageIcon size={18} /> Capa indisponível
@@ -217,7 +204,7 @@ function Column({
   cards,
   labels,
   drag,
-  setDrag,
+  press,
 }: {
   col: BoardColumn;
   index: number;
@@ -225,7 +212,7 @@ function Column({
   cards: Creative[];
   labels: BoardLabel[];
   drag: DragState;
-  setDrag: (d: DragState) => void;
+  press: (e: React.PointerEvent<HTMLElement>, id: string) => void;
 }) {
   const state = useApp();
   const [menu, setMenu] = useState<{ rect: DOMRect; mode: "main" | "cover" } | null>(null);
@@ -284,20 +271,7 @@ function Column({
   // cartões deslizam para abrir espaço e para a nova posição
   useFlip(listRef, `${cards.map((c) => c.id).join(",")}|${isOver ? drag.before ?? "fim" : ""}|${drag.id ?? ""}`);
   return (
-    <section
-      className={cx("tcol", isOver && drag.id && "over")}
-      onDragOver={(e) => {
-        if (!drag.id) return;
-        e.preventDefault();
-        if (drag.overCol !== col.id || (e.target === e.currentTarget && drag.before !== null)) setDrag({ ...drag, overCol: col.id, before: e.target === e.currentTarget ? null : drag.before });
-      }}
-      onDrop={(e) => {
-        e.preventDefault();
-        const id = e.dataTransfer.getData("text/plain") || drag.id;
-        if (id) moveCreative(id, col.id, drag.before);
-        setDrag({ id: null, overCol: null, before: null });
-      }}
-    >
+    <section className={cx("tcol", isOver && drag.id && "over")} data-col={col.id}>
       <header className="tcol-head">
         {renaming ? (
           <input
@@ -339,16 +313,7 @@ function Column({
             labels={labels}
             dragging={drag.id === c.id}
             dropBefore={!!drag.id && drag.overCol === col.id && drag.before === c.id && drag.id !== c.id}
-            onDragStart={() => setDrag({ id: c.id, overCol: col.id, before: null })}
-            onDragEnd={() => setDrag({ id: null, overCol: null, before: null })}
-            onDragOverCard={(e, after) => {
-              if (!drag.id) return;
-              e.preventDefault();
-              e.stopPropagation();
-              const i = cards.findIndex((x) => x.id === c.id);
-              const before = after ? cards[i + 1]?.id ?? null : c.id;
-              if (drag.overCol !== col.id || drag.before !== before) setDrag({ ...drag, overCol: col.id, before });
-            }}
+            onPress={(e) => press(e, c.id)}
           />
         ))}
         {!!drag.id && isOver && drag.before === null && <div className="tdrop" />}
@@ -468,16 +433,11 @@ function Column({
 
 /* ---------- quadro ---------- */
 
-interface DragState {
-  id: string | null;
-  overCol: string | null;
-  before: string | null;
-}
 
 export function CreativeBoardView({ creatives }: { creatives: Creative[] }) {
   const state = useApp();
   const board = state.creativeBoard;
-  const [drag, setDrag] = useState<DragState>({ id: null, overCol: null, before: null });
+  const { drag, press, boardRef } = useBoardDrag(moveCreative);
   const [newList, setNewList] = useState<string | null>(null);
 
   const addList = () => {
@@ -488,7 +448,7 @@ export function CreativeBoardView({ creatives }: { creatives: Creative[] }) {
   };
 
   return (
-    <div className={cx("tboard", board.background && "has-bg")} style={board.background ? { backgroundImage: `url("${board.background}")` } : undefined}>
+    <div ref={boardRef} className={cx("tboard", board.background && "has-bg", drag.id && "dragging")} style={board.background ? { backgroundImage: `url("${board.background}")` } : undefined}>
       {board.columns.map((col, i) => (
         <Column
           key={col.id}
@@ -498,7 +458,7 @@ export function CreativeBoardView({ creatives }: { creatives: Creative[] }) {
           cards={sortCards(creatives.filter((c) => c.columnId === col.id))}
           labels={board.labels}
           drag={drag}
-          setDrag={setDrag}
+          press={press}
         />
       ))}
       <div className="tcol tcol-new">
