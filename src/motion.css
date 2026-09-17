@@ -59,7 +59,7 @@
 
 /* marcar tarefa: o check "salta" */
 .check.pop { animation: check-pop 360ms var(--ease-spring); }
-.check.pop.on svg { animation: check-draw 300ms var(--ease-out) both; }
+.check.pop.on svg { animation: check-draw 300ms var(--ease-out); }
 @keyframes check-pop { 0% { transform: scale(0.8); } 55% { transform: scale(1.14); } 100% { transform: scale(1); } }
 @keyframes check-draw { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: scale(1); } }
 .task-row.done, .tcard.done { transition: opacity var(--t-slow) ease; }
@@ -86,27 +86,27 @@
 @keyframes bubble-in { from { opacity: 0; transform: translateY(6px) scale(0.98); } to { opacity: 1; transform: none; } }
 
 /* troca de página: conteúdo sobe suavemente */
-.main > .page, .main > div > .page { animation: rise-in 360ms var(--ease-out) both; }
-.crv-body { animation: fade-in 260ms ease both; }
+.main > .page, .main > div > .page { animation: rise-in 360ms var(--ease-out) backwards; }
+.crv-body { animation: fade-in 260ms ease backwards; }
 
 /* janelas */
-.overlay { animation: fade-in 200ms ease both; backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
-.overlay > .modal { animation: pop-in 320ms var(--ease-ios) both; }
-.drawer-overlay { animation: fade-in 200ms ease both; }
-.drawer { animation: drawer-in 380ms var(--ease-ios) both; }
-.pop, .ai-popover, .ee-palette { animation: pop-in 200ms var(--ease-out) both; transform-origin: top left; }
-.ed-pop { animation: pop-in 240ms var(--ease-ios) both; }
-.ed-pop.sheet { animation: sheet-in 380ms var(--ease-ios) both; }
-.ed-backdrop, .pop-backdrop { animation: fade-in 160ms ease both; }
-.toast { animation: toast-in 360ms var(--ease-spring) both; }
-.bubble { animation: bubble-in 320ms var(--ease-out) both; }
-.tcomposer { animation: pop-in 200ms var(--ease-out) both; }
+.overlay { animation: fade-in 200ms ease backwards; backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+.overlay > .modal { animation: pop-in 320ms var(--ease-ios) backwards; }
+.drawer-overlay { animation: fade-in 200ms ease backwards; }
+.drawer { animation: drawer-in 380ms var(--ease-ios) backwards; }
+.pop, .ai-popover, .ee-palette { animation: pop-in 200ms var(--ease-out) backwards; transform-origin: top left; }
+.ed-pop { animation: pop-in 240ms var(--ease-ios) backwards; }
+.ed-pop.sheet { animation: sheet-in 380ms var(--ease-ios) backwards; }
+.ed-backdrop, .pop-backdrop { animation: fade-in 160ms ease backwards; }
+.toast { animation: toast-in 360ms var(--ease-spring) backwards; }
+.bubble { animation: bubble-in 320ms var(--ease-out) backwards; }
+.tcomposer { animation: pop-in 200ms var(--ease-out) backwards; }
 .cal-side { transition: transform 380ms var(--ease-ios); }
-.cal-side-backdrop { animation: fade-in 200ms ease both; }
+.cal-side-backdrop { animation: fade-in 200ms ease backwards; }
 
 /* ---------- arrastar ---------- */
 .drag-float { position: fixed; left: 0; top: 0; z-index: 200; pointer-events: none; will-change: transform; }
-.drag-float > .drag-ghost { animation: lift 200ms var(--ease-out) both; margin: 0; }
+.drag-float > .drag-ghost { animation: lift 200ms var(--ease-out) forwards; margin: 0; }
 @keyframes lift { from { transform: none; box-shadow: none; } to { transform: rotate(2.5deg) scale(1.03); } }
 body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select: none !important; }
 .tcard { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
@@ -128,14 +128,14 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
 .cal-item[draggable="true"], .mv-chip[draggable="true"], .board-card, .tcard.draggable { cursor: grab; }
 .tcard:active, .board-card:active { cursor: grabbing; }
 /* espaço onde o cartão vai cair: abre suavemente */
-.tdrop { animation: drop-open 220ms var(--ease-ios) both; }
+.tdrop { animation: drop-open 220ms var(--ease-ios) backwards; }
 @keyframes drop-open { from { height: 0; opacity: 0; } to { height: 44px; opacity: 1; } }
 .tcol.over, .board-col.drop, .mv-cell.drop, .cal-day.drop { transition: box-shadow var(--t-base) var(--ease-out), background-color var(--t-base) ease; }
 .board-col.drop, .mv-cell.drop, .cal-day.drop { background-color: var(--accent-soft); }
 /* eventos da agenda sendo movidos */
 .tg-event { transition: box-shadow var(--t-base) var(--ease-out), transform var(--t-base) var(--ease-out), opacity var(--t-base) ease; }
 .tg-event.dragging { transform: scale(1.02); box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3); }
-.tg-selection { animation: fade-in 120ms ease both; }
+.tg-selection { animation: fade-in 120ms ease backwards; }
 
 /* ---------- Assistente de IA ---------- */
 /* item da barra lateral com contorno luminoso em movimento */

@@ -31,6 +31,8 @@ export function emptyState(): AppState {
     favorites: [],
     events: [],
     calendarPrefs: { hidden: [], defaultCalendarId: "primary", view: "week" },
+    pomodoroPrefs: { focus: 25, short: 5, long: 15, longEvery: 4, autoStart: false, notify: true, sound: "none", volume: 0.6, musicUrl: "" },
+    pomodoroLog: [],
   };
 }
 

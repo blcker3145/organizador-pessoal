@@ -10,6 +10,8 @@ import { TaskDrawer } from "./components/TaskDrawer";
 import { useApp } from "./lib/store";
 import { ui, uiStore, useRoute } from "./lib/ui";
 import { CalendarPage } from "./pages/Calendar";
+import { PomodoroPage } from "./pages/Pomodoro";
+import { PomodoroMini } from "./components/PomodoroMini";
 import { CreativePage } from "./pages/CreativePage";
 import { CreativesPage } from "./pages/Creatives";
 import { FinancePage } from "./pages/Finance";
@@ -73,6 +75,8 @@ function Router() {
   switch (section) {
     case "agenda":
       return <CalendarPage />;
+    case "pomodoro":
+      return <PomodoroPage />;
     case "tarefas":
       return <TasksPage />;
     case "ideias":
@@ -132,6 +136,7 @@ function Workspace() {
         <Router />
       </main>
       <MobileNav />
+      <PomodoroMini />
       <TaskDrawer />
       <AssistantDrawer />
       <QuickCaptureModal />

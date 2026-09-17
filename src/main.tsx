@@ -5,6 +5,7 @@ import "./styles.css";
 import "./calendar.css";
 import "./board.css";
 import "./motion.css";
+import "./pomodoro.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

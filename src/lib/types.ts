@@ -304,6 +304,29 @@ export interface CalendarPrefs {
   view: "day" | "week" | "month" | "agenda";
 }
 
+/* ---------- Pomodoro ---------- */
+export type PomodoroMode = "focus" | "short" | "long";
+
+export interface PomodoroPrefs {
+  focus: number; // minutos
+  short: number;
+  long: number;
+  longEvery: number; // pausa longa a cada N focos
+  autoStart: boolean;
+  notify: boolean;
+  sound: string; // ambiente escolhido
+  volume: number; // 0..1
+  musicUrl: string; // link do YouTube ou Spotify
+}
+
+export interface PomodoroSession {
+  id: string;
+  date: ISODate;
+  endedAt: number;
+  minutes: number;
+  taskId: string | null;
+}
+
 /* ---------- Estado ---------- */
 export type FavoriteKind = "note" | "video" | "creative";
 
@@ -330,4 +353,6 @@ export interface AppState {
   favorites: { kind: FavoriteKind; id: string }[];
   events: LocalEvent[];
   calendarPrefs: CalendarPrefs;
+  pomodoroPrefs: PomodoroPrefs;
+  pomodoroLog: PomodoroSession[];
 }
