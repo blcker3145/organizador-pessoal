@@ -1,6 +1,6 @@
 import { Bell, Link2, Maximize2, Minimize2, Pause, Play, RotateCcw, SkipForward, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { LiquidCanvas } from "../components/LiquidCanvas";
+import { LavaCanvas } from "../components/LavaCanvas";
 import { NeuronLogo } from "../components/Logo";
 import { Checkbox } from "../components/common";
 import { AMBIENTS, ambientPlaying, embedUrl, isEmbedSound, setAmbientVolume, startAmbient, stopAmbient } from "../lib/ambient";
@@ -81,7 +81,7 @@ function Stage() {
 
   return (
     <section ref={stageRef} className={cx("pomo-stage", t.immersive && "full", running && "running", `mode-${t.mode}`)} aria-label="Cronômetro Pomodoro">
-      <LiquidCanvas fill={fill} calm={!running} hostRef={stageRef} />
+      <LavaCanvas fill={fill} calm={!running} hostRef={stageRef} />
 
       <header className="pomo-top" ref={topRef}>
         <span className="glass-chip">

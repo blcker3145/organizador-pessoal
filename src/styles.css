@@ -319,7 +319,7 @@ button.pill { cursor: pointer; }
 .blk-text, .blk-links {
   width: 100%; border: 0; outline: none; resize: none; background: transparent; padding: 3px 2px;
   line-height: 1.55; overflow: hidden; font-size: 15px; display: block;
-  font-family: inherit; letter-spacing: normal; white-space: pre-wrap; overflow-wrap: break-word; word-break: normal; tab-size: 4;
+  font-family: inherit; letter-spacing: normal; white-space: pre-wrap; overflow-wrap: anywhere; word-break: normal; tab-size: 4;
 }
 /* links clicáveis: a camada fica exatamente sobre o texto */
 .blk-text.has-links { color: transparent !important; caret-color: var(--text); }

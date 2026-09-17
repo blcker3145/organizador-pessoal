@@ -128,12 +128,27 @@ export function AutoTextarea(
 ) {
   const { inputRef, ...rest } = props;
   const local = useRef<HTMLTextAreaElement | null>(null);
-  useLayoutEffect(() => {
+  const fit = () => {
     const el = local.current;
     if (!el) return;
     el.style.height = "auto";
     el.style.height = `${el.scrollHeight}px`;
-  }, [props.value]);
+  };
+  useLayoutEffect(fit, [props.value]);
+  // a largura também muda a quantidade de linhas (tela menor, painel lateral…)
+  useEffect(() => {
+    const el = local.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    let lastWidth = el.clientWidth;
+    const ro = new ResizeObserver(() => {
+      if (el.clientWidth !== lastWidth) {
+        lastWidth = el.clientWidth;
+        fit();
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   return (
     <textarea
       rows={1}

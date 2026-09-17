@@ -1,13 +1,32 @@
-import { ArrowDown, ArrowLeft, ArrowUp, CheckSquare, ExternalLink, Image as ImageIcon, ImagePlus, Pin, Plus, Star, Tag, Trash2, X } from "lucide-react";
+import {
+  AlignLeft,
+  ArrowDown,
+  ArrowLeft,
+  ArrowUp,
+  Check,
+  CheckSquare,
+  ChevronDown,
+  Clock,
+  ExternalLink,
+  Image as ImageIcon,
+  ImagePlus,
+  Pin,
+  Plus,
+  Star,
+  Tag,
+  Trash2,
+  Type,
+  X,
+} from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { BlockEditor } from "../components/BlockEditor";
 import { LabelChip, pickImage, Popover, PopItem } from "../components/creatives/Board";
 import { LabelPicker } from "../components/creatives/BoardTools";
-import { checklistProgress, dueState } from "../lib/board";
+import { checklistProgress, dueState, dueText } from "../lib/board";
 import { AiFieldButton } from "../components/AiWriter";
 import { AutoTextarea, Checkbox, Empty, Modal } from "../components/common";
 import { blocksToMarkdown } from "../lib/ai";
-import { CREATIVE_CHANNELS, CREATIVE_FORMATS, CREATIVE_STAGES, creativeStageInfo, imageFileToDataUrl } from "../lib/creatives";
+import { CREATIVE_CHANNELS, CREATIVE_FORMATS, CREATIVE_STAGES, imageFileToDataUrl } from "../lib/creatives";
 import { relativeDate, today } from "../lib/dates";
 import {
   appStore,
@@ -69,26 +88,33 @@ function CreativeDetail({ creative }: { creative: Creative }) {
     set({ format, size });
   };
 
+  const hasTexts = !!(creative.headline || creative.bodyText || creative.cta || creative.slides.length);
+
   return (
-    <div className="page wide" style={{ maxWidth: 1180 }}>
-      <div className="row wrap" style={{ marginBottom: 18, gap: 6 }}>
+    <div className="page cd-page">
+      <div className="cd-top">
         <button className="btn ghost sm" onClick={() => navigate("/criativos")}>
           <ArrowLeft size={14} /> Criativos
         </button>
         <span className="grow" />
         <CoverButton creative={creative} />
-        <button className={cx("btn sm", creative.pinned && "active")} onClick={() => set({ pinned: !creative.pinned })} title="Mantém o cartão no topo da lista">
-          <Pin size={14} /> {creative.pinned ? "Fixado" : "Fixar no topo"}
+        <button
+          className={cx("icon-btn", creative.pinned && "on-accent")}
+          onClick={() => set({ pinned: !creative.pinned })}
+          aria-label={creative.pinned ? "Desafixar do topo" : "Fixar no topo da lista"}
+          title={creative.pinned ? "Fixado no topo da lista" : "Fixar no topo da lista"}
+        >
+          <Pin size={16} fill={creative.pinned ? "currentColor" : "none"} />
         </button>
         {creative.fileUrl && (
-          <a className="btn sm" href={creative.fileUrl} target="_blank" rel="noreferrer">
-            <ExternalLink size={14} /> Abrir arquivo
+          <a className="icon-btn" href={creative.fileUrl} target="_blank" rel="noreferrer" aria-label="Abrir arquivo" title="Abrir arquivo">
+            <ExternalLink size={16} />
           </a>
         )}
         <button className={cx("icon-btn", fav && "on")} onClick={() => toggleFavorite("creative", creative.id)} aria-label={fav ? "Tirar dos favoritos" : "Favoritar"} title="Favorito na barra lateral">
           <Star size={16} fill={fav ? "currentColor" : "none"} />
         </button>
-        <button className="icon-btn" onClick={del} aria-label="Excluir criativo">
+        <button className="icon-btn" onClick={del} aria-label="Excluir criativo" title="Excluir">
           <Trash2 size={16} />
         </button>
       </div>
@@ -99,69 +125,160 @@ function CreativeDetail({ creative }: { creative: Creative }) {
         </div>
       )}
 
-      <div className="video-layout">
-        <div style={{ minWidth: 0 }}>
-          <AutoTextarea
-            className="title-input"
-            value={creative.title}
-            placeholder="Nome do criativo"
-            aria-label="Nome do criativo"
-            autoFocus={!creative.title}
-            onChange={(e) => set({ title: e.target.value.replace(/\n/g, "") })}
-          />
-          <div className="props">
-            <span className="prop-k">Lista</span>
-            <span className="prop-v">
-              <select className="select bare" value={creative.columnId || ""} onChange={(e) => moveCreative(creative.id, e.target.value, null)} aria-label="Lista do quadro">
-                {state.creativeBoard.columns.map((col) => (
-                  <option key={col.id} value={col.id}>
-                    {col.title}
-                  </option>
-                ))}
-              </select>
-            </span>
+      <AutoTextarea
+        className="title-input cd-title"
+        value={creative.title}
+        placeholder="Nome do criativo"
+        aria-label="Nome do criativo"
+        autoFocus={!creative.title}
+        onChange={(e) => set({ title: e.target.value.replace(/\n/g, "") })}
+      />
 
-            <span className="prop-k">Etiquetas</span>
-            <span className="prop-v" style={{ gap: 4 }}>
-              <CardLabels creative={creative} />
-            </span>
+      {/* o essencial, numa linha só, como no Trello */}
+      <div className="cd-meta">
+        <div className="cd-meta-item">
+          <span className="cd-meta-k">Lista</span>
+          <label className="cd-chip select-chip">
+            <select value={creative.columnId || ""} onChange={(e) => moveCreative(creative.id, e.target.value, null)} aria-label="Lista do quadro">
+              {state.creativeBoard.columns.map((col) => (
+                <option key={col.id} value={col.id}>
+                  {col.title}
+                </option>
+              ))}
+            </select>
+            <ChevronDown size={13} />
+          </label>
+        </div>
+        <div className="cd-meta-item">
+          <span className="cd-meta-k">Etiquetas</span>
+          <div className="row wrap" style={{ gap: 4 }}>
+            <CardLabels creative={creative} />
+          </div>
+        </div>
+        <div className="cd-meta-item">
+          <span className="cd-meta-k">Datas</span>
+          <DatesChip creative={creative} />
+        </div>
+        <div className="cd-meta-item">
+          <span className="cd-meta-k">Formato</span>
+          <label className="cd-chip select-chip">
+            <select value={creative.format} onChange={(e) => changeFormat(e.target.value)} aria-label="Formato">
+              {CREATIVE_FORMATS.map((f) => (
+                <option key={f.value} value={f.value}>
+                  {f.value}
+                </option>
+              ))}
+            </select>
+            <ChevronDown size={13} />
+          </label>
+        </div>
+      </div>
 
-            <span className="prop-k">Etapa</span>
-            <span className="prop-v">
-              <select className="select bare" value={creative.stage} onChange={(e) => set({ stage: e.target.value as CreativeStage })} aria-label="Etapa">
-                {CREATIVE_STAGES.map((s) => (
-                  <option key={s.value} value={s.value}>
-                    {s.label}
-                  </option>
-                ))}
-              </select>
-              <span className={cx("pill", creativeStageInfo(creative.stage).color)}>{creativeStageInfo(creative.stage).label}</span>
-            </span>
+      <div className="cd-grid">
+        <div className="cd-main">
+          <section className="cd-sec">
+            <h2 className="cd-sec-title">
+              <AlignLeft size={16} /> Descrição
+            </h2>
+            <BlockEditor
+              blocks={creative.briefing}
+              onChange={(briefing) => set({ briefing })}
+              emptyHint="Objetivo, público, mensagem, links… digite '/' para títulos e listas"
+              aiContext={creativeContext(creative) + ". Este texto é o briefing"}
+            />
+          </section>
 
-            <span className="prop-k">Formato</span>
-            <span className="prop-v">
-              <select className="select bare" value={creative.format} onChange={(e) => changeFormat(e.target.value)} aria-label="Formato">
-                {CREATIVE_FORMATS.map((f) => (
-                  <option key={f.value} value={f.value}>
-                    {f.value}
-                  </option>
-                ))}
-              </select>
-            </span>
+          <CardChecklist creative={creative} />
 
-            <span className="prop-k">Tamanho</span>
-            <span className="prop-v">
-              <input className="input bare num" style={{ width: 160 }} placeholder="Ex.: 1080×1350" value={creative.size} onChange={(e) => set({ size: e.target.value })} aria-label="Tamanho" />
-            </span>
+          <details className="cd-sec cd-fold" open={hasTexts || undefined}>
+            <summary className="cd-sec-title">
+              <Type size={16} /> Textos da peça
+              <ChevronDown size={15} className="cd-fold-ico" />
+            </summary>
+            <div className="stack" style={{ gap: 10, marginTop: 8 }}>
+              <div className="field">
+                <span className="row">
+                  <label htmlFor="creative-headline">Título / headline</label>
+                  <AiFieldButton label="Headline" value={creative.headline} onChange={(headline) => set({ headline })} context={creativeContext(creative)} />
+                </span>
+                <input id="creative-headline" className="input" value={creative.headline} placeholder="A frase principal da arte" onChange={(e) => set({ headline: e.target.value })} />
+              </div>
+              <div className="field">
+                <span className="row">
+                  <label htmlFor="creative-body">Texto de apoio</label>
+                  <AiFieldButton label="Texto de apoio" value={creative.bodyText} onChange={(bodyText) => set({ bodyText })} context={creativeContext(creative)} />
+                </span>
+                <textarea id="creative-body" className="textarea" rows={3} value={creative.bodyText} placeholder="Texto secundário, informações, legenda da arte" onChange={(e) => set({ bodyText: e.target.value })} />
+              </div>
+              <div className="field">
+                <span className="row">
+                  <label htmlFor="creative-cta">Chamada para ação</label>
+                  <AiFieldButton label="Chamada para ação" value={creative.cta} onChange={(cta) => set({ cta })} context={creativeContext(creative)} />
+                </span>
+                <input id="creative-cta" className="input" value={creative.cta} placeholder="Ex.: Me chama no direct" onChange={(e) => set({ cta: e.target.value })} />
+              </div>
+              {showSlides ? (
+                <Slides creative={creative} />
+              ) : (
+                <button className="btn ghost sm" style={{ alignSelf: "flex-start" }} onClick={() => set({ slides: [{ id: uid(), text: creative.headline }] })}>
+                  <Plus size={14} /> Dividir em slides / telas
+                </button>
+              )}
+            </div>
+          </details>
 
-            <span className="prop-k">Canais</span>
-            <span className="prop-v" style={{ gap: 4 }}>
+          <Moodboard creative={creative} />
+        </div>
+
+        <aside className="cd-side">
+          <section className="card cd-details">
+            <div className="card-title">Detalhes</div>
+            <dl className="cd-dl">
+              <dt>Etapa</dt>
+              <dd>
+                <select className="select bare" value={creative.stage} onChange={(e) => set({ stage: e.target.value as CreativeStage })} aria-label="Etapa">
+                  {CREATIVE_STAGES.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+              </dd>
+              <dt>Tamanho</dt>
+              <dd>
+                <input className="input bare num" placeholder="1080×1350" value={creative.size} onChange={(e) => set({ size: e.target.value })} aria-label="Tamanho" />
+              </dd>
+              <dt>Cliente</dt>
+              <dd>
+                <input className="input bare" list="creative-clients" placeholder="Perfil próprio" value={creative.client} onChange={(e) => set({ client: e.target.value })} aria-label="Cliente ou marca" />
+                <datalist id="creative-clients">
+                  {clients.map((c) => (
+                    <option key={c} value={c} />
+                  ))}
+                </datalist>
+              </dd>
+              <dt>Arquivo</dt>
+              <dd>
+                <input className="input bare" placeholder="Link do Figma, Canva…" value={creative.fileUrl} onChange={(e) => set({ fileUrl: e.target.value })} aria-label="Link do arquivo" />
+              </dd>
+              {note && (
+                <>
+                  <dt>Ideia</dt>
+                  <dd>
+                    <button className="link ellipsis" onClick={() => navigate(`/ideias/${note.id}`)}>
+                      {note.title || "Sem título"} ↗
+                    </button>
+                  </dd>
+                </>
+              )}
+            </dl>
+            <div className="cd-channels">
               {CREATIVE_CHANNELS.map((ch) => {
                 const on = creative.channels.includes(ch);
                 return (
                   <button
                     key={ch}
-                    className={cx("pill", on ? "selected" : "outline")}
+                    className={cx("cd-channel", on && "on")}
                     aria-pressed={on}
                     onClick={() => set({ channels: on ? creative.channels.filter((x) => x !== ch) : [...creative.channels, ch] })}
                   >
@@ -169,113 +286,64 @@ function CreativeDetail({ creative }: { creative: Creative }) {
                   </button>
                 );
               })}
-            </span>
-
-            <span className="prop-k">Cliente / marca</span>
-            <span className="prop-v">
-              <input className="input bare" style={{ width: 240 }} list="creative-clients" placeholder="Ex.: Perfil próprio" value={creative.client} onChange={(e) => set({ client: e.target.value })} aria-label="Cliente ou marca" />
-              <datalist id="creative-clients">
-                {clients.map((c) => (
-                  <option key={c} value={c} />
-                ))}
-              </datalist>
-            </span>
-
-            <span className="prop-k">Entrega</span>
-            <span className="prop-v">
-              <input
-                className="input bare"
-                type="date"
-                style={{ width: "auto" }}
-                value={creative.startDate || ""}
-                max={creative.dueDate || undefined}
-                onChange={(e) => set({ startDate: e.target.value || null })}
-                aria-label="Data de início"
-                title="Início"
-              />
-              <span className="muted">→</span>
-              <input className="input bare" type="date" style={{ width: "auto" }} value={creative.dueDate || ""} onChange={(e) => set({ dueDate: e.target.value || null })} aria-label="Data de entrega" title="Entrega" />
-              {creative.dueDate && (
-                <>
-                  <input className="input bare" type="time" style={{ width: "auto" }} value={creative.dueTime} onChange={(e) => set({ dueTime: e.target.value })} aria-label="Horário de entrega" />
-                  <label className="row" style={{ gap: 6, fontSize: 13, cursor: "pointer" }}>
-                    <input type="checkbox" checked={creative.dueDone} onChange={(e) => set({ dueDone: e.target.checked })} /> Concluído
-                  </label>
-                  <span className={cx("tbadge", "due-" + dueState(creative))}>{relativeDate(creative.dueDate)}</span>
-                </>
-              )}
-            </span>
-
-            <span className="prop-k">Arquivo</span>
-            <span className="prop-v">
-              <input className="input bare" style={{ width: 320 }} placeholder="Link do Figma, Canva, Drive…" value={creative.fileUrl} onChange={(e) => set({ fileUrl: e.target.value })} aria-label="Link do arquivo" />
-            </span>
-
-            {note && (
-              <>
-                <span className="prop-k">Ideia de origem</span>
-                <span className="prop-v">
-                  <button className="link" onClick={() => navigate(`/ideias/${note.id}`)}>
-                    {note.title || "Sem título"} ↗
-                  </button>
-                </span>
-              </>
-            )}
-          </div>
-
-          <SectionTitle>Briefing</SectionTitle>
-          <BlockEditor
-            blocks={creative.briefing}
-            onChange={(briefing) => set({ briefing })}
-            emptyHint="Objetivo, público, mensagem, estilo… digite '/' para títulos e listas"
-            aiContext={creativeContext(creative) + ". Este texto é o briefing"}
-          />
-
-          <SectionTitle>Textos da peça</SectionTitle>
-          <div className="stack" style={{ gap: 10 }}>
-            <div className="field">
-              <span className="row">
-                <label htmlFor="creative-headline">Título / headline</label>
-                <AiFieldButton label="Headline" value={creative.headline} onChange={(headline) => set({ headline })} context={creativeContext(creative)} />
-              </span>
-              <input id="creative-headline" className="input" value={creative.headline} placeholder="A frase principal da arte" onChange={(e) => set({ headline: e.target.value })} />
             </div>
-            <div className="field">
-              <span className="row">
-                <label htmlFor="creative-body">Texto de apoio</label>
-                <AiFieldButton label="Texto de apoio" value={creative.bodyText} onChange={(bodyText) => set({ bodyText })} context={creativeContext(creative)} />
-              </span>
-              <textarea id="creative-body" className="textarea" rows={3} value={creative.bodyText} placeholder="Texto secundário, informações, legenda da arte" onChange={(e) => set({ bodyText: e.target.value })} />
-            </div>
-            <div className="field">
-              <span className="row">
-                <label htmlFor="creative-cta">Chamada para ação</label>
-                <AiFieldButton label="Chamada para ação" value={creative.cta} onChange={(cta) => set({ cta })} context={creativeContext(creative)} />
-              </span>
-              <input id="creative-cta" className="input" value={creative.cta} placeholder="Ex.: Me chama no direct" onChange={(e) => set({ cta: e.target.value })} />
-            </div>
-          </div>
-
-          {showSlides ? (
-            <Slides creative={creative} />
-          ) : (
-            <button className="btn ghost sm" style={{ marginTop: 10 }} onClick={() => set({ slides: [{ id: uid(), text: creative.headline }] })}>
-              <Plus size={14} /> Dividir em slides / telas
-            </button>
-          )}
-
-          <Moodboard creative={creative} />
-        </div>
-
-        <aside className="stack" style={{ gap: 14 }}>
-          <CardChecklist creative={creative} />
-          <FormatPreview creative={creative} />
+          </section>
           <VisualIdentity creative={creative} />
           <CreativeTasks creative={creative} />
           <CreativeLinks creative={creative} />
         </aside>
       </div>
     </div>
+  );
+}
+
+function DatesChip({ creative }: { creative: Creative }) {
+  const [rect, setRect] = useState<DOMRect | null>(null);
+  const set = (c: Partial<Creative>) => patchCreative(creative.id, c);
+  const text = dueText(creative);
+  const state = dueState(creative);
+  return (
+    <>
+      <button className={cx("cd-chip", creative.dueDate && `due-${state}`)} onClick={(e) => setRect(e.currentTarget.getBoundingClientRect())}>
+        <Clock size={13} />
+        {text || "Adicionar"}
+        {creative.dueDate && creative.dueTime && <span className="muted">· {creative.dueTime}</span>}
+        {creative.dueDate && state === "done" && <Check size={13} />}
+      </button>
+      {rect && (
+        <Popover anchor={rect} onClose={() => setRect(null)} width={290}>
+          <div className="pop-title">Datas</div>
+          <div className="cd-dates">
+            <label className="ee-label-stack">
+              Início
+              <input className="input" type="date" value={creative.startDate || ""} max={creative.dueDate || undefined} onChange={(e) => set({ startDate: e.target.value || null })} />
+            </label>
+            <div className="cd-dates-row">
+              <label className="ee-label-stack grow">
+                Entrega
+                <input className="input" type="date" value={creative.dueDate || ""} onChange={(e) => set({ dueDate: e.target.value || null })} />
+              </label>
+              <label className="ee-label-stack">
+                Hora
+                <input className="input" type="time" value={creative.dueTime} disabled={!creative.dueDate} onChange={(e) => set({ dueTime: e.target.value })} />
+              </label>
+            </div>
+            {creative.dueDate && (
+              <label className="row" style={{ gap: 8, cursor: "pointer", fontSize: 13.5 }}>
+                <Checkbox checked={creative.dueDone} onChange={(v) => set({ dueDone: v })} label="Concluído" /> Marcar como concluído
+                <span className="grow" />
+                <span className="muted">{relativeDate(creative.dueDate)}</span>
+              </label>
+            )}
+            {(creative.startDate || creative.dueDate) && (
+              <button className="btn sm" onClick={() => (set({ startDate: null, dueDate: null, dueTime: "", dueDone: false }), setRect(null))}>
+                Remover datas
+              </button>
+            )}
+          </div>
+        </Popover>
+      )}
+    </>
   );
 }
 
@@ -383,12 +451,10 @@ function CardChecklist({ creative }: { creative: Creative }) {
     setText("");
   };
   return (
-    <section className="card">
-      <div className="card-title">
-        <span className="row" style={{ gap: 6 }}>
-          <CheckSquare size={14} /> Checklist {total > 0 && <span className="muted num">{done}/{total}</span>}
-        </span>
-      </div>
+    <section className="cd-sec">
+      <h2 className="cd-sec-title">
+        <CheckSquare size={16} /> Checklist {total > 0 && <span className="muted num cd-count">{done}/{total}</span>}
+      </h2>
       {total > 0 && (
         <div className="cl-bar" aria-hidden>
           <span style={{ width: `${Math.round((done / total) * 100)}%` }} className={cx(done === total && "full")} />
@@ -408,7 +474,7 @@ function CardChecklist({ creative }: { creative: Creative }) {
       <input
         className="input"
         style={{ marginTop: 6 }}
-        placeholder="Adicionar item e Enter"
+        placeholder="Adicionar um item e apertar Enter"
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && add()}
@@ -424,11 +490,7 @@ function creativeContext(c: Creative): string {
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="card-title" style={{ borderTop: "1px solid var(--line)", paddingTop: 14, marginTop: 22 }}>
-      {children}
-    </div>
-  );
+  return <div className="cd-sec-title sub">{children}</div>;
 }
 
 function Slides({ creative }: { creative: Creative }) {
@@ -522,9 +584,9 @@ function Moodboard({ creative }: { creative: Creative }) {
 
   return (
     <>
-      <SectionTitle>
-        <span>Moodboard · {creative.moodboard.length}</span>
-      </SectionTitle>
+      <h2 className="cd-sec-title">
+        <ImageIcon size={16} /> Moodboard {creative.moodboard.length > 0 && <span className="muted num cd-count">{creative.moodboard.length}</span>}
+      </h2>
       <div
         className={cx("drop-zone", dragOver && "over")}
         tabIndex={0}
@@ -586,42 +648,6 @@ function Moodboard({ creative }: { creative: Creative }) {
         </Modal>
       )}
     </>
-  );
-}
-
-function parseRatio(size: string): number | null {
-  const m = size.match(/(\d+(?:[.,]\d+)?)\s*[×x*]\s*(\d+(?:[.,]\d+)?)/i);
-  if (!m) return null;
-  const w = Number(m[1].replace(",", "."));
-  const h = Number(m[2].replace(",", "."));
-  return w > 0 && h > 0 ? w / h : null;
-}
-
-function FormatPreview({ creative }: { creative: Creative }) {
-  const ratio = parseRatio(creative.size);
-  if (!ratio) return null;
-  const [bg, fg, accent] = creative.palette;
-  const width = ratio >= 1 ? 100 : Math.max(38, ratio * 100);
-  return (
-    <section className="card">
-      <div className="card-title">
-        <span>Proporção</span>
-        <span className="muted num" style={{ textTransform: "none", letterSpacing: 0 }}>
-          {creative.size}
-        </span>
-      </div>
-      <div
-        className="format-preview"
-        style={{ aspectRatio: String(ratio), width: `${width}%`, background: bg || undefined, color: fg || undefined }}
-      >
-        <strong>{creative.headline || creative.title || "Headline"}</strong>
-        {creative.cta && (
-          <span className="format-cta" style={accent ? { background: accent, color: bg || "#fff" } : undefined}>
-            {creative.cta}
-          </span>
-        )}
-      </div>
-    </section>
   );
 }
 
