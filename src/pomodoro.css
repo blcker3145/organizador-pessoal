@@ -34,6 +34,9 @@
 
 /* textos que invertem de cor quando o líquido passa por trás */
 .blend { mix-blend-mode: difference; color: #fff; }
+/* com a lava colorida, o texto fica branco com sombra em vez de inverter a cor */
+.tinted .blend, .tinted .blend-in, .tinted .pomo-dots i { mix-blend-mode: normal; }
+.tinted .blend { text-shadow: 0 2px 24px rgba(0, 0, 0, 0.28); }
 .pomo-clock {
   font-size: clamp(64px, 11vw, 120px); font-weight: 600; letter-spacing: -0.04em; line-height: 1;
   font-variant-numeric: tabular-nums; font-feature-settings: "tnum";

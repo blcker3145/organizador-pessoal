@@ -80,8 +80,8 @@ function Stage() {
   }, [t.immersive]);
 
   return (
-    <section ref={stageRef} className={cx("pomo-stage", t.immersive && "full", running && "running", `mode-${t.mode}`)} aria-label="Cronômetro Pomodoro">
-      <LavaCanvas fill={fill} calm={!running} hostRef={stageRef} />
+    <section ref={stageRef} className={cx("pomo-stage", t.immersive && "full", running && "running", `mode-${t.mode}`, !["none", "white"].includes(prefs.sound) && "tinted")} aria-label="Cronômetro Pomodoro">
+      <LavaCanvas fill={fill} calm={!running} hostRef={stageRef} palette={prefs.sound === "custom" && !prefs.musicUrl ? "none" : prefs.sound} />
 
       <header className="pomo-top" ref={topRef}>
         <span className="glass-chip">

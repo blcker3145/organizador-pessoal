@@ -4,6 +4,8 @@
  * - Bolhas aquecem na base, sobem devagar, esfriam e descem, fundindo-se entre si (metaballs).
  * - O mouse vira uma bolha que se funde com a lava, empurra as outras e deixa rastro;
  *   quanto mais rápido ele se move, mais agitada a lava fica.
+ * - A cor segue o som escolhido (preto→branco no silêncio, azul na chuva, fogo na lareira…),
+ *   com transição suave entre as paletas.
  * Sem WebGL, usa o líquido em canvas 2D.
  */
 import { useEffect, useRef, useState, type RefObject } from "react";
@@ -17,6 +19,30 @@ attribute vec2 aPos;
 void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
 `;
 
+type Vec3 = [number, number, number];
+interface Palette {
+  c1: Vec3; // fundo da lava (base, mais escuro)
+  c2: Vec3; // meio
+  c3: Vec3; // topo e brilho
+  mat: Vec3; // [opacidade do corpo, arco-íris, iridescência]
+}
+
+const hex = (h: string): Vec3 => [parseInt(h.slice(1, 3), 16) / 255, parseInt(h.slice(3, 5), 16) / 255, parseInt(h.slice(5, 7), 16) / 255];
+const pal = (a: string, b: string, c: string, mat: Vec3 = [1, 0, 0]): Palette => ({ c1: hex(a), c2: hex(b), c3: hex(c), mat });
+
+/** Paleta da lava para cada som do Pomodoro. */
+export const LAVA_PALETTES: Record<string, Palette> = {
+  none: pal("#141418", "#8a8a94", "#ffffff"),
+  rain: pal("#061a4a", "#1f6bff", "#a9d4ff"),
+  ocean: pal("#00263a", "#0096c7", "#7df9e6"),
+  fire: pal("#4a0600", "#ff3d00", "#ffc23d"),
+  brown: pal("#1a0d06", "#8a4f2a", "#f0c79a"),
+  white: pal("#2a2a30", "#d6d9e2", "#ffffff", [0.32, 0, 0]),
+  lofi: pal("#2a0a3a", "#ff4fa0", "#ffe3f3", [1, 1, 0]),
+  custom: pal("#120a2a", "#7a5cff", "#e9e4ff", [0.8, 0, 1]),
+};
+const paletteOf = (id: string) => LAVA_PALETTES[id] || LAVA_PALETTES.none;
+
 const FRAG = `
 precision highp float;
 uniform vec2 uRes;
@@ -26,6 +52,10 @@ uniform float uSurface;
 uniform float uEnergy;
 uniform vec3 uBlobs[${MAX}];
 uniform int uCount;
+uniform vec3 uC1;
+uniform vec3 uC2;
+uniform vec3 uC3;
+uniform vec3 uMat;
 
 float smin(float a, float b, float k) {
   float h = max(k - abs(a - b), 0.0) / k;
@@ -45,34 +75,65 @@ float scene(vec2 p) {
   return d;
 }
 
+vec3 grad3(float g) {
+  return g < 0.5 ? mix(uC1, uC2, g * 2.0) : mix(uC2, uC3, (g - 0.5) * 2.0);
+}
+
+vec3 hsv(float h, float s, float v) {
+  vec3 k = clamp(abs(fract(h + vec3(0.0, 2.0 / 3.0, 1.0 / 3.0)) * 6.0 - 3.0) - 1.0, 0.0, 1.0);
+  return v * mix(vec3(1.0), k, s);
+}
+
 void main() {
   vec2 p = gl_FragCoord.xy / uScale;
+  vec2 uv = p / uRes;
   float d = scene(p);
   vec2 e = vec2(1.5, 0.0);
   vec2 g = vec2(scene(p + e.xy) - scene(p - e.xy), scene(p + e.yx) - scene(p - e.yx));
 
-  // perfil arredondado: borda inclinada, centro plano -> volume de cera brilhante
-  float depth = clamp(-d / 42.0, 0.0, 1.0);
+  // perfil arredondado: borda inclinada, centro plano -> volume de vidro líquido
+  float depth = clamp(-d / 46.0, 0.0, 1.0);
   float hgt = sqrt(1.0 - (1.0 - depth) * (1.0 - depth));
   vec2 gn = g / max(length(g), 1e-4);
-  vec3 n = normalize(vec3(gn * (1.0 - hgt) * 1.7, max(hgt, 0.14)));
+  vec3 n = normalize(vec3(gn * (1.0 - hgt) * 1.8, max(hgt, 0.14)));
 
   vec3 L = normalize(vec3(-0.45, 0.65, 0.72));
   float diff = clamp(dot(n, L), 0.0, 1.0);
   vec3 H = normalize(L + vec3(0.0, 0.0, 1.0));
-  float spec = pow(clamp(dot(n, H), 0.0, 1.0), 70.0);
-  float spec2 = pow(clamp(dot(n, normalize(vec3(0.5, -0.3, 1.0))), 0.0, 1.0), 20.0);
-  float fres = pow(1.0 - n.z, 2.2);
+  float spec = pow(clamp(dot(n, H), 0.0, 1.0), 80.0);
+  float spec2 = pow(clamp(dot(n, normalize(vec3(0.5, -0.3, 1.0))), 0.0, 1.0), 18.0);
+  float fres = pow(1.0 - n.z, 2.0);
 
-  vec3 wax = mix(vec3(0.62, 0.62, 0.68), vec3(0.985), smoothstep(0.0, 1.0, diff));
-  wax += spec * 0.85 + spec2 * 0.08;
-  wax -= fres * 0.22;
+  // degradê de baixo (escuro) para cima (claro), com um leve deslocamento pela refração
+  float top = max(uSurface / uRes.y + 0.16, 0.34);
+  float gy = clamp(uv.y / top + gn.y * (1.0 - hgt) * 0.08 + diff * 0.12 - 0.04, 0.0, 1.0);
+  vec3 tint = grad3(gy);
+  // lo-fi: arco-íris que gira devagar
+  vec3 rgb = hsv(fract(uv.y * 0.55 + uv.x * 0.25 + uTime * 0.045), 0.72, 0.35 + 0.65 * gy);
+  tint = mix(tint, rgb, uMat.y);
+  // playlist: película iridescente, como bolha de sabão
+  vec3 iri = 0.55 + 0.45 * cos(6.2831 * (vec3(0.0, 0.33, 0.67) + fres * 1.4 + uv.y * 0.5 + uTime * 0.03));
+  tint = mix(tint, mix(tint, iri * (0.4 + 0.6 * gy), 0.35 + fres * 0.6), uMat.z);
+
+  // fundo preto com um clarão da cor da lava vindo de baixo
+  vec3 bg = uC2 * (0.1 * (1.0 - uv.y)) + uC3 * 0.02;
+  float glow = exp(-max(d, 0.0) / 36.0) * (0.14 + uEnergy * 0.08);
+  bg += mix(uC2, uC3, 0.35) * glow;
+
+  // corpo: meio translúcido no centro, mais denso nas bordas (vidro)
+  vec3 body = tint * (0.78 + 0.42 * diff);
+  float opac = uMat.x * mix(0.98, 0.72, hgt);
+  vec3 inner = mix(bg + tint * 0.3, body, opac);
+  // aro de luz e reflexos do vidro
+  vec3 rim = mix(uC3, vec3(1.0), 0.25);
+  inner += rim * fres * (0.22 + 0.4 * (1.0 - uMat.x));
+  inner += spec * 0.9 + spec2 * 0.07 * rim;
+  inner += rim * smoothstep(0.55, 1.0, hgt) * pow(clamp(dot(n, normalize(vec3(-0.2, 0.6, 1.0))), 0.0, 1.0), 6.0) * 0.06;
   // luz vinda de baixo, como a lâmpada
-  wax *= mix(1.03, 0.9, clamp(p.y / uRes.y, 0.0, 1.0));
+  inner *= mix(1.05, 0.92, uv.y);
 
   float inside = 1.0 - smoothstep(-1.2, 1.2, d);
-  float glow = exp(-max(d, 0.0) / 34.0) * (0.09 + uEnergy * 0.06);
-  vec3 col = mix(vec3(glow), clamp(wax, 0.0, 1.0), inside);
+  vec3 col = mix(bg, clamp(inner, 0.0, 1.0), inside);
   gl_FragColor = vec4(col, 1.0);
 }
 `;
@@ -101,18 +162,22 @@ function compile(gl: WebGLRenderingContext, type: number, src: string) {
   return sh;
 }
 
-export function LavaCanvas(props: { fill: number; calm: boolean; hostRef: RefObject<HTMLElement> }) {
+type LavaProps = { fill: number; calm: boolean; hostRef: RefObject<HTMLElement>; palette?: string };
+
+export function LavaCanvas({ palette, ...props }: LavaProps) {
   const [fallback, setFallback] = useState(false);
   if (fallback) return <LiquidCanvas {...props} />;
-  return <LavaGL {...props} onFail={() => setFallback(true)} />;
+  return <LavaGL {...props} palette={palette} onFail={() => setFallback(true)} />;
 }
 
-function LavaGL({ fill, calm, hostRef, onFail }: { fill: number; calm: boolean; hostRef: RefObject<HTMLElement>; onFail: () => void }) {
+function LavaGL({ fill, calm, hostRef, palette = "none", onFail }: LavaProps & { onFail: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fillRef = useRef(fill);
   const calmRef = useRef(calm);
   fillRef.current = fill;
   calmRef.current = calm;
+  const paletteRef = useRef(palette);
+  paletteRef.current = palette;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -146,7 +211,13 @@ function LavaGL({ fill, calm, hostRef, onFail }: { fill: number; calm: boolean; 
       energy: gl.getUniformLocation(prog, "uEnergy"),
       blobs: gl.getUniformLocation(prog, "uBlobs"),
       count: gl.getUniformLocation(prog, "uCount"),
+      c1: gl.getUniformLocation(prog, "uC1"),
+      c2: gl.getUniformLocation(prog, "uC2"),
+      c3: gl.getUniformLocation(prog, "uC3"),
+      mat: gl.getUniformLocation(prog, "uMat"),
     };
+    // paleta atual, que desliza até a do som escolhido
+    const pal = { ...paletteOf(paletteRef.current) };
 
     const reduced = prefersReducedMotion();
     let w = 1;
@@ -277,6 +348,9 @@ function LavaGL({ fill, calm, hostRef, onFail }: { fill: number; calm: boolean; 
       const dt = Math.min(0.05, (now - prev) / 1000);
       prev = now;
       simulate(dt, now);
+      const goal = paletteOf(paletteRef.current);
+      const kp = Math.min(1, dt * 2.4);
+      for (const key of ["c1", "c2", "c3", "mat"] as const) pal[key] = pal[key].map((v, i) => v + (goal[key][i] - v) * kp) as Vec3;
 
       let k = 0;
       const put = (x: number, y: number, r: number) => {
@@ -297,6 +371,10 @@ function LavaGL({ fill, calm, hostRef, onFail }: { fill: number; calm: boolean; 
       gl.uniform1f(u.energy, energy);
       gl.uniform3fv(u.blobs, data);
       gl.uniform1i(u.count, k);
+      gl.uniform3fv(u.c1, pal.c1);
+      gl.uniform3fv(u.c2, pal.c2);
+      gl.uniform3fv(u.c3, pal.c3);
+      gl.uniform3fv(u.mat, pal.mat);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       raf = requestAnimationFrame(frame);
     };
