@@ -3,6 +3,7 @@
  * e só o servidor conhece a chave do provedor (Google Gemini ou OpenAI).
  */
 import { FunctionsHttpError } from "@supabase/supabase-js";
+import { flattenMarkdownLinks } from "./links";
 import { createStore } from "./createStore";
 import { supabase } from "./supabase";
 import type { Block, BlockType } from "./types";
@@ -166,7 +167,7 @@ export function markdownToBlocks(md: string): Block[] {
 
 /** Remove negrito/itálico em markdown, que o editor não mostra. */
 function stripInline(text: string): string {
-  return text.replace(/\*\*(.+?)\*\*/g, "$1").replace(/__(.+?)__/g, "$1");
+  return flattenMarkdownLinks(text).replace(/\*\*(.+?)\*\*/g, "$1").replace(/__(.+?)__/g, "$1");
 }
 
 /* ---------------- Ações rápidas de escrita ---------------- */

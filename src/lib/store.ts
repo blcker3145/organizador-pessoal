@@ -16,6 +16,7 @@ import type {
 } from "./types";
 import { textBlock, uid } from "./util";
 import { boardFieldDefaults, columnForStage, normalizeBoardState } from "./board";
+import { flattenMarkdownLinks } from "./links";
 
 export const STATE_VERSION = 1;
 
@@ -24,7 +25,19 @@ export function normalizeState(raw: unknown): AppState | null {
   if (!raw || typeof raw !== "object") return null;
   const parsed = raw as AppState;
   if (parsed.version !== STATE_VERSION || !Array.isArray(parsed.tasks)) return null;
-  return normalizeBoardState({ ...emptyState(), ...parsed });
+  return fixImportedLinks(normalizeBoardState({ ...emptyState(), ...parsed }));
+}
+
+/** Links importados do Trello vinham como [url](url "…"): deixa só o endereço. */
+function fixImportedLinks(s: AppState): AppState {
+  const needs = s.creatives.some((c) => c.briefing.some((b) => b.text.includes("](http")));
+  if (!needs) return s;
+  return {
+    ...s,
+    creatives: s.creatives.map((c) =>
+      c.briefing.some((b) => b.text.includes("](http")) ? { ...c, briefing: c.briefing.map((b) => ({ ...b, text: flattenMarkdownLinks(b.text) })) } : c,
+    ),
+  };
 }
 
 // O estado começa vazio; a sessão (sync.ts) carrega os dados da conta ao entrar.

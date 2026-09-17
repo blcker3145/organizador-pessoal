@@ -4,6 +4,7 @@ import { blocksToMarkdown, markdownToBlocks, WRITING_ACTIONS } from "../lib/ai";
 import type { Block, BlockType } from "../lib/types";
 import { ui } from "../lib/ui";
 import { cx, normalize, textBlock } from "../lib/util";
+import { hasUrl, splitLinks } from "../lib/links";
 import { applyVoiceCommands } from "../lib/speech";
 import { AiPanel, type AiScope } from "./AiWriter";
 import { AutoTextarea, Checkbox } from "./common";
@@ -55,6 +56,35 @@ const PLACEHOLDER: Partial<Record<BlockType, string>> = {
   quote: "Citação",
 };
 
+/**
+ * Camada por cima do texto com a mesma fonte e quebra de linha: os endereços viram links.
+ * Só os links recebem clique; o resto do clique passa para a caixa de texto (edição).
+ */
+function LinkLayer({ text }: { text: string }) {
+  return (
+    <span className="blk-links" aria-hidden="true">
+      {splitLinks(text).map((p, i) =>
+        p.href ? (
+          <a
+            key={i}
+            href={p.href}
+            target="_blank"
+            rel="noreferrer noopener"
+            tabIndex={-1}
+            onMouseDown={(e) => e.preventDefault()}
+            title="Abrir link"
+          >
+            {p.text}
+          </a>
+        ) : (
+          <span key={i}>{p.text}</span>
+        ),
+      )}
+      {"​"}
+    </span>
+  );
+}
+
 export function BlockEditor({
   blocks,
   onChange,
@@ -77,6 +107,8 @@ export function BlockEditor({
   const pending = useRef<{ id: string; pos: number } | null>(null);
   const wrap = useRef<HTMLDivElement>(null);
   const [menu, setMenu] = useState<{ id: string; filter: string; index: number; top: number } | null>(null);
+  // bloco em edição: os outros mostram os links clicáveis
+  const [focusedId, setFocusedId] = useState<string | null>(null);
   const [aiPanel, setAiPanel] = useState<{ key: number; anchorId: string; scopeId: string | null; scope: AiScope; instruction: string; autoRun: boolean } | null>(null);
 
   const list = blocks.length ? blocks : [textBlock()];
@@ -480,8 +512,9 @@ export function BlockEditor({
                 <Checkbox checked={!!block.checked} onChange={(v) => onChange(replace(block.id, { checked: v }))} />
               </span>
             )}
+            <span className="blk-field">
             <AutoTextarea
-              className="blk-text"
+              className={cx("blk-text", focusedId !== block.id && hasUrl(block.text) && "has-links")}
               value={block.text}
               placeholder={isEmpty ? emptyHint : PLACEHOLDER[block.type]}
               aria-label="Bloco de texto"
@@ -496,9 +529,17 @@ export function BlockEditor({
               onKeyDown={(e) => handleKey(e, block, idx)}
               onKeyUp={(e) => trackCaret(block.id, e.currentTarget)}
               onClick={(e) => trackCaret(block.id, e.currentTarget)}
-              onFocus={(e) => trackCaret(block.id, e.currentTarget)}
-              onBlur={() => window.setTimeout(() => setMenu((m) => (m && m.id === block.id ? null : m)), 150)}
+              onFocus={(e) => {
+                setFocusedId(block.id);
+                trackCaret(block.id, e.currentTarget);
+              }}
+              onBlur={() => {
+                setFocusedId((f) => (f === block.id ? null : f));
+                window.setTimeout(() => setMenu((m) => (m && m.id === block.id ? null : m)), 150);
+              }}
             />
+            {focusedId !== block.id && hasUrl(block.text) && <LinkLayer text={block.text} />}
+            </span>
           </div>
           {panel}
           </Fragment>
