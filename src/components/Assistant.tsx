@@ -1,4 +1,4 @@
-import { CheckSquare, Clapperboard, FileText, Loader2, Mic, Palette, Send, Sparkles, Trash2, Wallet, X, CheckCheck, CalendarDays } from "lucide-react";
+import { CheckSquare, Clapperboard, FileText, Mic, Palette, Send, Sparkles, Trash2, Wallet, X, CheckCheck, CalendarDays } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { AiError, providerLabel, useAiProvider, type ChatMessage } from "../lib/ai";
 import { runAssistant, type CreatedItem } from "../lib/assistant";
@@ -110,8 +110,10 @@ function AssistantChat() {
   return (
     <div className="assistant-wrap">
       <div className="drawer-top">
-        <Sparkles size={17} />
-        <strong>Assistente IA</strong>
+        <span className={cx("ai-orb", loading && "busy")} aria-hidden>
+          <Sparkles size={15} />
+        </span>
+        <strong className="ai-text">Assistente IA</strong>
         {provider && (
           <span className="muted" style={{ fontSize: 12 }}>
             {providerLabel(provider)}
@@ -159,16 +161,19 @@ function AssistantChat() {
           </div>
         ))}
         {loading && (
-          <div className="bubble assistant">
-            <span className="row muted">
-              <Loader2 size={14} className="spin" /> Pensando…
+          <div className="bubble assistant thinking" aria-live="polite">
+            <span className="thinking-text">Pensando</span>
+            <span className="thinking-dots" aria-hidden>
+              <i />
+              <i />
+              <i />
             </span>
           </div>
         )}
       </div>
 
       <form
-        className="assistant-input"
+        className={cx("assistant-input", loading && "busy")}
         onSubmit={(e) => {
           e.preventDefault();
           send(input);

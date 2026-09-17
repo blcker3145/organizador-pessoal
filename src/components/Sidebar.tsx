@@ -68,8 +68,8 @@ export function Sidebar() {
       <button className="side-item" onClick={() => ui.openCapture()}>
         <Plus size={16} /> Captura rápida <kbd>N</kbd>
       </button>
-      <button className="side-item" onClick={ui.openAssistant}>
-        <Sparkles size={16} /> Assistente IA <kbd>Ctrl J</kbd>
+      <button className="side-item ai-glow" onClick={ui.openAssistant}>
+        <Sparkles size={16} className="ai-sparkle" /> <span className="ai-text">Assistente IA</span> <kbd>Ctrl J</kbd>
       </button>
       <div className="side-group">Módulos</div>
       {MODULES.map((m) => (

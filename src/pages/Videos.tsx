@@ -1,4 +1,5 @@
 import { Plus } from "lucide-react";
+import { liftDragImage } from "../lib/motion";
 import { useState } from "react";
 import { STAGES, Tabs, PLATFORMS, stageInfo } from "../components/common";
 import { MonthCalendar } from "../components/MonthCalendar";
@@ -197,6 +198,7 @@ function Pipeline({ videos, onNew }: { videos: Video[]; onNew: (stage: VideoStag
                   draggable
                   onDragStart={(e) => {
                     e.dataTransfer.setData("text/plain", v.id);
+                    liftDragImage(e);
                     setDragging(v.id);
                   }}
                   onDragEnd={() => setDragging(null)}

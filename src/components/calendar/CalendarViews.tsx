@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight, MapPin, Repeat, Video } from "lucide-react";
+import { liftDragImage } from "../../lib/motion";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   addDaysDate,
@@ -406,7 +407,10 @@ export function MonthView({ anchor, events, handlers }: { anchor: Date; events: 
                     className={cx("mv-chip", filled && "filled", ev.done && "done")}
                     style={filled ? { background: ev.color, color: textColor(ev.color) } : undefined}
                     draggable={canDrag(ev)}
-                    onDragStart={(e) => e.dataTransfer.setData("text/plain", ev.key)}
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData("text/plain", ev.key);
+                      liftDragImage(e);
+                    }}
                     onClick={(e) => handlers.onSelect(ev, e.currentTarget.getBoundingClientRect())}
                     title={ev.title}
                   >

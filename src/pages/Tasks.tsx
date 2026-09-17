@@ -1,4 +1,5 @@
 import { Plus } from "lucide-react";
+import { liftDragImage } from "../lib/motion";
 import { useMemo, useState } from "react";
 import { Checkbox, Empty, PriorityPill, STATUS_LABEL, Tabs } from "../components/common";
 import { MonthCalendar } from "../components/MonthCalendar";
@@ -196,6 +197,7 @@ function BoardView({ tasks }: { tasks: Task[] }) {
                   draggable
                   onDragStart={(e) => {
                     e.dataTransfer.setData("text/plain", t.id);
+                    liftDragImage(e);
                     setDragging(t.id);
                   }}
                   onDragEnd={() => setDragging(null)}

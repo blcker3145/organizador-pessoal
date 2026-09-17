@@ -1,0 +1,219 @@
+/*
+ * Movimento no estilo Apple:
+ * - respostas curtas (120–200 ms) para toque e hover;
+ * - entradas com desaceleração longa e suave (300–450 ms);
+ * - nada pisca ou pula; tudo respeita "reduzir movimento".
+ */
+:root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-ios: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-spring: cubic-bezier(0.34, 1.36, 0.64, 1);
+  --t-fast: 140ms;
+  --t-base: 220ms;
+  --t-slow: 420ms;
+  --ai-1: #8b5cf6;
+  --ai-2: #3b82f6;
+  --ai-3: #ec4899;
+  --ai-4: #f59e0b;
+}
+
+/* ---------- respostas ao toque e ao passar o mouse ---------- */
+.btn, .icon-btn, .link-btn, .link, .side-item, .tab, .pill, .chip-toggle, .check,
+.tb-btn, .tb-select, .tb-clear, .tcol-add, .tcol-menu, .pop-item, .palette-item,
+.assistant-suggestion, .created-chip, .seg button, .mini-day, .mv-num, .mv-chip, .mv-more,
+.ag-item, .tg-dayhead, .imp-choice, .imp-board, .ee-switch, .ee-meet, .ee-add, .ee-color,
+.ee-color-btn, .lbl-color, .mobile-nav a, .mobile-nav button, .cal-day, .board-card,
+.gallery-card, .task-row, .tcard, .tcover, .cal-create, .cal-fab {
+  transition:
+    background-color var(--t-fast) ease,
+    border-color var(--t-fast) ease,
+    color var(--t-fast) ease,
+    box-shadow var(--t-base) var(--ease-out),
+    opacity var(--t-base) ease,
+    filter var(--t-fast) ease,
+    transform var(--t-base) var(--ease-out);
+}
+.input, .select, .textarea, .cal-search, .ee .input, .ee .select, .ee .textarea {
+  transition: border-color var(--t-fast) ease, box-shadow var(--t-base) var(--ease-out), background-color var(--t-fast) ease;
+}
+
+/* leve "afundar" ao clicar, como um botão físico */
+.btn:active:not(:disabled), .icon-btn:active:not(:disabled), .tb-btn:active, .tb-select:active,
+.chip-toggle:active, .seg button:active, .pop-item:active, .imp-choice:active, .imp-board:active:not(:disabled),
+.assistant-suggestion:active:not(:disabled), .cal-create:active, .cal-fab:active, .ee-meet:active,
+.mobile-nav a:active, .mobile-nav button:active, .tcol-add:active {
+  transform: scale(0.96);
+  transition-duration: 80ms;
+}
+.side-item:active, .task-row:active, .ag-item:active { transform: scale(0.985); transition-duration: 80ms; }
+
+/* cartões que se erguem ao passar o mouse */
+@media (hover: hover) {
+  .board-card:hover, .gallery-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(15, 15, 15, 0.12); }
+  .tcard:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(9, 30, 66, 0.18), 0 0 1px rgba(9, 30, 66, 0.3); }
+  :root[data-theme="dark"] .tcard:hover { box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45), 0 0 1px rgba(0, 0, 0, 0.6); }
+  .tcover:hover img { transform: scale(1.03); }
+  .imp-choice:hover { transform: translateY(-1px); }
+  .ee-color:hover, .lbl-color:hover { transform: scale(1.12); }
+}
+
+/* marcar tarefa: o check "salta" */
+.check.pop { animation: check-pop 360ms var(--ease-spring); }
+.check.pop.on svg { animation: check-draw 300ms var(--ease-out) both; }
+@keyframes check-pop { 0% { transform: scale(0.8); } 55% { transform: scale(1.14); } 100% { transform: scale(1); } }
+@keyframes check-draw { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: scale(1); } }
+.task-row.done, .tcard.done { transition: opacity var(--t-slow) ease; }
+
+/* abas com sublinhado que desliza para dentro */
+.tab { position: relative; }
+.tab::after {
+  content: ""; position: absolute; left: 10px; right: 10px; bottom: -2px; height: 2px; border-radius: 2px;
+  background: currentColor; transform: scaleX(0); transition: transform var(--t-base) var(--ease-ios);
+}
+.tab.on { border-color: transparent; }
+.tab.on::after { transform: scaleX(1); }
+
+/* seletor segmentado da agenda */
+.seg button.on { box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12); }
+
+/* ---------- entradas ---------- */
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes rise-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes pop-in { from { opacity: 0; transform: scale(0.96) translateY(4px); } to { opacity: 1; transform: none; } }
+@keyframes sheet-in { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes drawer-in { from { transform: translateX(28px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes toast-in { from { opacity: 0; transform: translateY(12px) scale(0.96); } to { opacity: 1; transform: none; } }
+@keyframes bubble-in { from { opacity: 0; transform: translateY(6px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+/* troca de página: conteúdo sobe suavemente */
+.main > .page, .main > div > .page { animation: rise-in 360ms var(--ease-out) both; }
+.crv-body { animation: fade-in 260ms ease both; }
+
+/* janelas */
+.overlay { animation: fade-in 200ms ease both; backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+.overlay > .modal { animation: pop-in 320ms var(--ease-ios) both; }
+.drawer-overlay { animation: fade-in 200ms ease both; }
+.drawer { animation: drawer-in 380ms var(--ease-ios) both; }
+.pop, .ai-popover, .ee-palette { animation: pop-in 200ms var(--ease-out) both; transform-origin: top left; }
+.ed-pop { animation: pop-in 240ms var(--ease-ios) both; }
+.ed-pop.sheet { animation: sheet-in 380ms var(--ease-ios) both; }
+.ed-backdrop, .pop-backdrop { animation: fade-in 160ms ease both; }
+.toast { animation: toast-in 360ms var(--ease-spring) both; }
+.bubble { animation: bubble-in 320ms var(--ease-out) both; }
+.tcomposer { animation: pop-in 200ms var(--ease-out) both; }
+.cal-side { transition: transform 380ms var(--ease-ios); }
+.cal-side-backdrop { animation: fade-in 200ms ease both; }
+
+/* ---------- arrastar ---------- */
+/* a cópia que acompanha o mouse: inclinada e com sombra, como um cartão erguido */
+.drag-ghost {
+  transform: rotate(2.5deg) scale(1.03);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28), 0 4px 10px rgba(0, 0, 0, 0.18) !important;
+  border-radius: 10px;
+  opacity: 1 !important;
+}
+/* o lugar de onde o cartão saiu fica esmaecido */
+.tcard.dragging, .board-card.dragging {
+  opacity: 0.35;
+  transform: scale(0.97);
+  box-shadow: none;
+}
+.cal-item[draggable="true"], .mv-chip[draggable="true"], .board-card, .tcard.draggable { cursor: grab; }
+.tcard:active, .board-card:active { cursor: grabbing; }
+/* espaço onde o cartão vai cair: abre suavemente */
+.tdrop { animation: drop-open 220ms var(--ease-ios) both; }
+@keyframes drop-open { from { height: 0; opacity: 0; } to { height: 44px; opacity: 1; } }
+.tcol.over, .board-col.drop, .mv-cell.drop, .cal-day.drop { transition: box-shadow var(--t-base) var(--ease-out), background-color var(--t-base) ease; }
+.board-col.drop, .mv-cell.drop, .cal-day.drop { background-color: var(--accent-soft); }
+/* eventos da agenda sendo movidos */
+.tg-event { transition: box-shadow var(--t-base) var(--ease-out), transform var(--t-base) var(--ease-out), opacity var(--t-base) ease; }
+.tg-event.dragging { transform: scale(1.02); box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3); }
+.tg-selection { animation: fade-in 120ms ease both; }
+
+/* ---------- Assistente de IA ---------- */
+/* item da barra lateral com contorno luminoso em movimento */
+.side-item.ai-glow { position: relative; isolation: isolate; }
+.side-item.ai-glow::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; z-index: -1;
+  background: conic-gradient(from var(--ai-angle, 0deg), var(--ai-1), var(--ai-2), var(--ai-3), var(--ai-4), var(--ai-1));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  opacity: 0.7; animation: ai-spin 6s linear infinite;
+}
+.side-item.ai-glow::after {
+  content: ""; position: absolute; inset: 1px; border-radius: inherit; z-index: -1;
+  background: radial-gradient(120% 140% at 0% 50%, rgba(139, 92, 246, 0.16), transparent 60%);
+  opacity: 0.8; transition: opacity var(--t-base) ease;
+}
+.side-item.ai-glow:hover::before { opacity: 1; }
+.side-item.ai-glow:hover::after { opacity: 1; background: radial-gradient(120% 140% at 0% 50%, rgba(139, 92, 246, 0.26), transparent 70%); }
+.ai-sparkle { color: var(--ai-1); animation: ai-twinkle 2.8s ease-in-out infinite; }
+.ai-text {
+  background: linear-gradient(90deg, var(--text) 0%, var(--text) 40%, var(--ai-1) 50%, var(--text) 60%, var(--text) 100%);
+  background-size: 250% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: ai-shine 5s ease-in-out infinite;
+}
+@property --ai-angle { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+@keyframes ai-spin { to { --ai-angle: 360deg; } }
+@keyframes ai-twinkle { 0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.85; } 50% { transform: scale(1.15) rotate(12deg); opacity: 1; } }
+@keyframes ai-shine { 0%, 60% { background-position: 100% 0; } 100% { background-position: -150% 0; } }
+
+/* orbe no topo do painel */
+.ai-orb {
+  width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; color: #fff; flex: none; position: relative;
+  background: conic-gradient(from var(--ai-angle, 0deg), var(--ai-1), var(--ai-2), var(--ai-3), var(--ai-4), var(--ai-1));
+  animation: ai-spin 8s linear infinite;
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.45);
+}
+.ai-orb svg { position: relative; z-index: 1; }
+.ai-orb.busy { animation-duration: 1.6s; box-shadow: 0 0 18px rgba(139, 92, 246, 0.75); }
+.ai-orb.busy::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid rgba(139, 92, 246, 0.45); animation: ai-ping 1.4s var(--ease-out) infinite; }
+@keyframes ai-ping { from { transform: scale(0.85); opacity: 0.9; } to { transform: scale(1.45); opacity: 0; } }
+
+/* borda luminosa no topo do painel */
+.drawer.assistant::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; z-index: 3;
+  background: linear-gradient(90deg, var(--ai-1), var(--ai-2), var(--ai-3), var(--ai-4), var(--ai-1));
+  background-size: 200% 100%; animation: ai-flow 4s linear infinite;
+}
+@keyframes ai-flow { to { background-position: 200% 0; } }
+
+/* campo de mensagem brilha enquanto a IA trabalha */
+.assistant-input .textarea { transition: box-shadow var(--t-slow) var(--ease-out), border-color var(--t-base) ease; }
+.assistant-input.busy .textarea {
+  border-color: transparent;
+  box-shadow: 0 0 0 1.5px rgba(139, 92, 246, 0.8), 0 0 18px rgba(139, 92, 246, 0.3);
+  animation: ai-breathe 1.8s ease-in-out infinite;
+}
+@keyframes ai-breathe {
+  0%, 100% { box-shadow: 0 0 0 1.5px rgba(139, 92, 246, 0.7), 0 0 10px rgba(59, 130, 246, 0.2); }
+  50% { box-shadow: 0 0 0 1.5px rgba(236, 72, 153, 0.8), 0 0 22px rgba(139, 92, 246, 0.4); }
+}
+
+/* "Pensando…" */
+.bubble.thinking { display: inline-flex; align-items: center; gap: 8px; }
+.thinking-text {
+  background: linear-gradient(90deg, var(--text-3) 0%, var(--text) 50%, var(--text-3) 100%);
+  background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: ai-flow 1.6s linear infinite reverse; font-size: 13.5px;
+}
+.thinking-dots { display: inline-flex; gap: 3px; }
+.thinking-dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--ai-1); animation: dot-bounce 1.2s var(--ease-out) infinite; }
+.thinking-dots i:nth-child(2) { animation-delay: 0.15s; background: var(--ai-2); }
+.thinking-dots i:nth-child(3) { animation-delay: 0.3s; background: var(--ai-3); }
+@keyframes dot-bounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-4px); opacity: 1; } }
+
+/* botões de IA nos editores ganham um brilho discreto */
+.ai-spark { transition: transform var(--t-base) var(--ease-spring), color var(--t-fast) ease; }
+.ai-spark:hover { transform: rotate(-12deg) scale(1.12); }
+
+/* ---------- acessibilidade ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+  .side-item.ai-glow::before { animation: none; }
+}

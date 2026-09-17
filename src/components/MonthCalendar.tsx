@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { liftDragImage } from "../lib/motion";
 import { useState, type ReactNode } from "react";
 import { calendarGrid, fromISO, monthKey, monthLabel, shiftMonthKey, today } from "../lib/dates";
 import type { ISODate } from "../lib/types";
@@ -74,7 +75,10 @@ export function MonthCalendar({
                   key={it.id}
                   className={cx("cal-item", it.done && "done")}
                   draggable={!!onDrop}
-                  onDragStart={(e) => e.dataTransfer.setData("text/plain", it.id)}
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData("text/plain", it.id);
+                    liftDragImage(e);
+                  }}
                   onClick={(e) => {
                     e.stopPropagation();
                     it.onClick();

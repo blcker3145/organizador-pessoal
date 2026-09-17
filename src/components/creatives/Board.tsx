@@ -16,6 +16,7 @@ import {
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { attachmentCount, checklistProgress, dueState, dueText, labelStyle, newColumn, sortCards } from "../../lib/board";
 import { imageFileToDataUrl } from "../../lib/creatives";
+import { liftDragImage, useFlip } from "../../lib/motion";
 import { createCreative, deleteBoardColumn, moveCreative, patchCreative, setBoard, useApp } from "../../lib/store";
 import type { BoardColumn, BoardLabel, Creative } from "../../lib/types";
 import { navigate, ui } from "../../lib/ui";
@@ -142,12 +143,14 @@ function Card({
       {dropBefore && <div className="tdrop" />}
       <div
         className={cx("tcard", dragging && "dragging", c.pinned && "pinned")}
+        data-flip={c.id}
         draggable
         role="button"
         tabIndex={0}
         onDragStart={(e) => {
           e.dataTransfer.setData("text/plain", c.id);
           e.dataTransfer.effectAllowed = "move";
+          liftDragImage(e);
           onDragStart();
         }}
         onDragEnd={onDragEnd}
@@ -278,6 +281,8 @@ function Column({
   };
 
   const isOver = drag.overCol === col.id;
+  // cartões deslizam para abrir espaço e para a nova posição
+  useFlip(listRef, `${cards.map((c) => c.id).join(",")}|${isOver ? drag.before ?? "fim" : ""}|${drag.id ?? ""}`);
   return (
     <section
       className={cx("tcol", isOver && drag.id && "over")}

@@ -23,8 +23,14 @@ export function Checkbox({
       className={cx("check", checked && "on", round && "round")}
       onClick={(e) => {
         e.stopPropagation();
+        // anima só quando a pessoa clica
+        const el = e.currentTarget;
+        el.classList.remove("pop");
+        void el.offsetWidth;
+        el.classList.add("pop");
         onChange(!checked);
       }}
+      onAnimationEnd={(e) => e.currentTarget.classList.remove("pop")}
     >
       {checked && <Check size={12} strokeWidth={3} />}
     </button>
