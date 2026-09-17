@@ -16,14 +16,46 @@
   --tcol-muted: #9fadbc;
 }
 
-.page.page-board { max-width: none; height: 100%; display: flex; flex-direction: column; padding-bottom: 16px; }
-.page-board .filters { margin-bottom: 8px; }
+/* topo fixo: no quadro só as listas rolam */
+.page.page-board { max-width: none; height: 100%; display: flex; flex-direction: column; padding-bottom: 12px; overflow: hidden; }
+.page-board .page-head { margin-bottom: 12px; }
+.page-board .tabs { margin-bottom: 12px; }
+.crv-top { position: sticky; top: 0; z-index: 6; background: var(--bg); flex: none; }
 
-.tboard-bar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.tb-row {
+  display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden;
+  padding: 2px 1px 12px; scrollbar-width: none;
+}
+.tb-row::-webkit-scrollbar { display: none; }
+.tb-group { display: inline-flex; flex: none; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.tb-group .tb-btn { border: 0; border-radius: 0; }
+.tb-group .tb-btn + .tb-btn { border-left: 1px solid var(--line); }
+.tb-spacer { flex: 1 0 8px; }
+
+.tb-select, .tb-btn {
+  flex: none; height: 32px; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px;
+  border: 1px solid var(--line); border-radius: 8px; background-color: var(--bg-soft); color: var(--text-2);
+  font-size: 13px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: background-color 0.12s, border-color 0.12s, color 0.12s;
+}
+.tb-select {
+  appearance: none; -webkit-appearance: none; width: auto; max-width: 200px; field-sizing: content; padding-right: 30px; outline: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a8f98' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 11px center;
+}
+.tb-select:hover, .tb-btn:hover { border-color: var(--line-strong); color: var(--text); background-color: var(--bg-hover); }
+.tb-group .tb-btn:hover { background-color: var(--bg-hover); }
+.tb-select:focus-visible, .tb-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-soft); border-color: var(--accent); }
+.tb-select.on, .tb-btn.on { border-color: var(--accent); color: var(--accent); background-color: var(--accent-soft); }
+.tb-select option { color: var(--text); background: var(--bg-elev); }
+.tb-btn svg { flex: none; }
+.tb-btn.accent { background-color: var(--accent); border-color: var(--accent); color: #fff; }
+.tb-btn.accent:hover { filter: brightness(0.95); color: #fff; background-color: var(--accent); }
+.tb-clear { flex: none; height: 32px; padding: 0 8px; border: 0; background: none; color: var(--text-3); font-size: 13px; cursor: pointer; border-radius: 8px; }
+.tb-clear:hover { color: var(--text); background: var(--bg-hover); }
 .btn.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
 
 .tboard {
-  flex: 1; min-height: 360px; display: flex; align-items: flex-start; gap: 12px;
+  flex: 1; min-height: 0; display: flex; align-items: flex-start; gap: 12px;
   overflow-x: auto; overflow-y: hidden; padding: 4px 2px 12px; border-radius: 12px;
   scrollbar-width: thin;
 }
@@ -194,8 +226,13 @@
 .cl-item .icon-btn { opacity: 0; width: 24px; height: 24px; }
 .cl-item:hover .icon-btn, .cl-item .icon-btn:focus-visible { opacity: 1; }
 
+@media (max-width: 1100px) {
+  .tb-btn.icon .tb-label, .tb-long { display: none; }
+  .tb-btn.icon { padding: 0 10px; }
+}
 @media (max-width: 800px) {
-  .page.page-board { height: auto; min-height: 100%; }
+  .page.page-board { height: auto; min-height: 100%; overflow: visible; }
+  .tb-row { margin-right: -16px; padding-right: 16px; }
   .tboard { min-height: 0; height: min(72dvh, 600px); scroll-snap-type: x mandatory; }
   .tcol { width: 84vw; max-width: 300px; scroll-snap-align: start; }
   .imp-choices { grid-template-columns: 1fr; }

@@ -130,7 +130,15 @@ export function LabelPicker({ selected, onToggle }: { selected?: string[]; onTog
 
 /* ---------- barra do quadro ---------- */
 
-export function BoardToolbar({ labelFilter, setLabelFilter }: { labelFilter: string[]; setLabelFilter: (ids: string[]) => void }) {
+export function BoardToolbar({
+  labelFilter,
+  setLabelFilter,
+  children,
+}: {
+  labelFilter: string[];
+  setLabelFilter: (ids: string[]) => void;
+  children?: React.ReactNode;
+}) {
   const state = useApp();
   const board = state.creativeBoard;
   const [menu, setMenu] = useState<{ rect: DOMRect; kind: "labels" | "filter" | "background" } | null>(null);
@@ -139,19 +147,25 @@ export function BoardToolbar({ labelFilter, setLabelFilter }: { labelFilter: str
   const open = (kind: "labels" | "filter" | "background") => (e: React.MouseEvent<HTMLButtonElement>) => setMenu({ rect: e.currentTarget.getBoundingClientRect(), kind });
 
   return (
-    <div className="tboard-bar">
-      <button className={cx("btn sm", labelFilter.length > 0 && "active")} onClick={open("filter")}>
-        <Tag size={14} /> {labelFilter.length ? `Etiquetas (${labelFilter.length})` : "Filtrar por etiqueta"}
+    <div className="tb-row">
+      <button className={cx("tb-btn", labelFilter.length > 0 && "on")} onClick={open("filter")} aria-haspopup="true">
+        <Tag size={14} /> {labelFilter.length ? `Etiquetas · ${labelFilter.length}` : "Etiqueta"}
       </button>
-      <button className="btn sm" onClick={open("labels")}>
-        <Pencil size={14} /> Etiquetas
-      </button>
-      <button className="btn sm" onClick={open("background")}>
-        <ImageIcon size={14} /> Plano de fundo
-      </button>
-      <span className="grow" />
-      <button className="btn sm" onClick={() => setImporting(true)}>
-        <Download size={14} /> Importar do Trello
+      {children}
+      <span className="tb-spacer" />
+      <div className="tb-group" role="group" aria-label="Personalizar quadro">
+        <button className="tb-btn icon" onClick={open("labels")} title="Gerenciar etiquetas" aria-label="Gerenciar etiquetas">
+          <Pencil size={14} />
+          <span className="tb-label">Etiquetas</span>
+        </button>
+        <button className="tb-btn icon" onClick={open("background")} title="Plano de fundo" aria-label="Plano de fundo">
+          <ImageIcon size={14} />
+          <span className="tb-label">Fundo</span>
+        </button>
+      </div>
+      <button className="tb-btn accent" onClick={() => setImporting(true)}>
+        <Download size={14} />
+        <span className="tb-long">Importar do </span>Trello
       </button>
 
       {menu && (

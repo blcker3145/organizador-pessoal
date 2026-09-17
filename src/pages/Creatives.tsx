@@ -35,61 +35,68 @@ export function CreativesPage() {
     navigate(`/criativos/${c.id}`);
   };
 
-  return (
-    <div className={cx("page wide", view === "pipeline" && "page-board")} style={view === "pipeline" ? undefined : { maxWidth: 1500 }}>
-      <div className="page-head">
-        <div>
-          <h1 className="page-title">Criativos</h1>
-          <div className="page-sub">Planejamento de peças de design: briefing, textos, moodboard e entrega.</div>
-        </div>
-        <button className="btn primary" onClick={() => newCreative()}>
-          <Plus size={15} /> Novo criativo
-        </button>
-      </div>
-      <Tabs
-        value={view}
-        onChange={setView}
-        items={[
-          { value: "pipeline", label: "Quadro" },
-          { value: "galeria", label: "Galeria" },
-          { value: "calendario", label: "Calendário de entregas" },
-          { value: "tabela", label: "Tabela" },
-        ]}
-      />
-      <div className="filters">
-        <select id="c-format" className="select" value={format} onChange={(e) => setFormat(e.target.value)} aria-label="Formato">
-          <option value="">Todos os formatos</option>
-          {CREATIVE_FORMATS.map((f) => (
-            <option key={f.value}>{f.value}</option>
-          ))}
-        </select>
-        <select id="c-channel" className="select" value={channel} onChange={(e) => setChannel(e.target.value)} aria-label="Canal">
-          <option value="">Todos os canais</option>
-          {CREATIVE_CHANNELS.map((c) => (
+  const filters = (
+    <>
+      <select id="c-format" className={cx("tb-select", format && "on")} value={format} onChange={(e) => setFormat(e.target.value)} aria-label="Formato">
+        <option value="">Formato</option>
+        {CREATIVE_FORMATS.map((f) => (
+          <option key={f.value}>{f.value}</option>
+        ))}
+      </select>
+      <select id="c-channel" className={cx("tb-select", channel && "on")} value={channel} onChange={(e) => setChannel(e.target.value)} aria-label="Canal">
+        <option value="">Canal</option>
+        {CREATIVE_CHANNELS.map((c) => (
+          <option key={c}>{c}</option>
+        ))}
+      </select>
+      {clients.length > 0 && (
+        <select id="c-client" className={cx("tb-select", client && "on")} value={client} onChange={(e) => setClient(e.target.value)} aria-label="Cliente ou marca">
+          <option value="">Cliente</option>
+          {clients.map((c) => (
             <option key={c}>{c}</option>
           ))}
         </select>
-        {clients.length > 0 && (
-          <select id="c-client" className="select" value={client} onChange={(e) => setClient(e.target.value)} aria-label="Cliente ou marca">
-            <option value="">Todos os clientes</option>
-            {clients.map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
-        )}
-        {(format || client || channel) && (
-          <button className="link-btn" onClick={() => (setFormat(""), setClient(""), setChannel(""))}>
-            Limpar filtros
+      )}
+      {(format || client || channel || labelFilter.length > 0) && (
+        <button className="tb-clear" onClick={() => (setFormat(""), setClient(""), setChannel(""), setLabelFilter([]))}>
+          Limpar
+        </button>
+      )}
+    </>
+  );
+
+  return (
+    <div className={cx("page wide", view === "pipeline" && "page-board")} style={view === "pipeline" ? undefined : { maxWidth: 1500 }}>
+      <div className="crv-top">
+        <div className="page-head">
+          <div>
+            <h1 className="page-title">Criativos</h1>
+            <div className="page-sub">Planejamento de peças de design: briefing, textos, moodboard e entrega.</div>
+          </div>
+          <button className="btn primary" onClick={() => newCreative()}>
+            <Plus size={15} /> Novo criativo
           </button>
+        </div>
+        <Tabs
+          value={view}
+          onChange={setView}
+          items={[
+            { value: "pipeline", label: "Quadro" },
+            { value: "galeria", label: "Galeria" },
+            { value: "calendario", label: "Calendário de entregas" },
+            { value: "tabela", label: "Tabela" },
+          ]}
+        />
+        {view === "pipeline" ? (
+          <BoardToolbar labelFilter={labelFilter} setLabelFilter={setLabelFilter}>
+            {filters}
+          </BoardToolbar>
+        ) : (
+          <div className="tb-row">{filters}</div>
         )}
       </div>
 
-      {view === "pipeline" && (
-        <>
-          <BoardToolbar labelFilter={labelFilter} setLabelFilter={setLabelFilter} />
-          <CreativeBoardView creatives={creatives} />
-        </>
-      )}
+      {view === "pipeline" && <CreativeBoardView creatives={creatives} />}
       {view === "galeria" && <Gallery creatives={creatives} />}
       {view === "calendario" && (
         <MonthCalendar
