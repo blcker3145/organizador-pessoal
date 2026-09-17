@@ -1,5 +1,5 @@
 import { ImageIcon, Plus } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Empty, Tabs } from "../components/common";
 import { CreativeBoardView, LabelChip } from "../components/creatives/Board";
 import { BoardToolbar } from "../components/creatives/BoardTools";
@@ -13,13 +13,68 @@ import { cx } from "../lib/util";
 
 type View = "pipeline" | "galeria" | "calendario" | "tabela";
 
+/* Ao abrir um criativo e voltar, a lista reaparece como estava: mesmos filtros e mesma rolagem. */
+const memory = new Map<string, unknown>();
+
+function useKeptState<T>(key: string, initial: T) {
+  const [value, setValue] = useState<T>(() => (memory.has(key) ? (memory.get(key) as T) : initial));
+  const set = (v: T) => {
+    memory.set(key, v);
+    setValue(v);
+  };
+  return [value, set] as const;
+}
+
+const scrollKey = (el: Element) => {
+  if (el.classList.contains("main")) return "main";
+  if (el.classList.contains("crv-body")) return "body";
+  if (el.classList.contains("tboard")) return "board";
+  if (el.classList.contains("tcol-cards")) {
+    const col = el.closest<HTMLElement>(".tcol")?.dataset.col;
+    return col ? `col:${col}` : null;
+  }
+  return null;
+};
+
+function useScrollMemory(view: string) {
+  useEffect(() => {
+    // cópia de antes de montar: o app zera a rolagem ao trocar de página logo depois
+    const saved = new Map(memory);
+    const restore = () => {
+      const els = [document.querySelector(".main"), document.querySelector(".crv-body"), document.querySelector(".tboard"), ...document.querySelectorAll(".tcol-cards")];
+      for (const el of els) {
+        const k = el && scrollKey(el);
+        const v = k && saved.get(`scroll:${view}:${k}`);
+        if (!el || typeof v !== "number") continue;
+        if (k === "board") el.scrollLeft = v;
+        else el.scrollTop = v;
+      }
+    };
+    let raf = requestAnimationFrame(() => {
+      restore();
+      raf = requestAnimationFrame(restore);
+    });
+    const onScroll = (e: Event) => {
+      if (!(e.target instanceof Element)) return;
+      const k = scrollKey(e.target);
+      if (k) memory.set(`scroll:${view}:${k}`, k === "board" ? e.target.scrollLeft : e.target.scrollTop);
+    };
+    document.addEventListener("scroll", onScroll, true);
+    return () => {
+      cancelAnimationFrame(raf);
+      document.removeEventListener("scroll", onScroll, true);
+    };
+  }, [view]);
+}
+
 export function CreativesPage() {
   const state = useApp();
   const [view, setView] = usePersistedView<View>("creatives", "pipeline");
-  const [format, setFormat] = useState("");
-  const [client, setClient] = useState("");
-  const [channel, setChannel] = useState("");
-  const [labelFilter, setLabelFilter] = useState<string[]>([]);
+  const [format, setFormat] = useKeptState("format", "");
+  const [client, setClient] = useKeptState("client", "");
+  const [channel, setChannel] = useKeptState("channel", "");
+  const [labelFilter, setLabelFilter] = useKeptState<string[]>("labels", []);
+  useScrollMemory(view);
 
   const clients = useMemo(() => [...new Set(state.creatives.map((c) => c.client).filter(Boolean))].sort(), [state.creatives]);
   const creatives = state.creatives.filter(
