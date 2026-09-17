@@ -37,17 +37,19 @@ export function Modal({
   children,
   footer,
   width,
+  className,
 }: {
   title?: ReactNode;
   onClose: () => void;
   children: ReactNode;
   footer?: ReactNode;
   width?: number;
+  className?: string;
 }) {
   useEscape(onClose);
   return (
     <div className="overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal" role="dialog" aria-modal="true" style={width ? { maxWidth: width } : undefined}>
+      <div className={cx("modal", className)} role="dialog" aria-modal="true" style={width ? { maxWidth: width } : undefined}>
         {title && (
           <div className="modal-head">
             <span>{title}</span>

@@ -1,8 +1,10 @@
 import { ImageIcon, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Empty, Tabs } from "../components/common";
+import { CreativeBoardView, LabelChip } from "../components/creatives/Board";
+import { BoardToolbar } from "../components/creatives/BoardTools";
 import { MonthCalendar } from "../components/MonthCalendar";
-import { CREATIVE_CHANNELS, CREATIVE_FORMATS, CREATIVE_STAGES, creativeStageInfo } from "../lib/creatives";
+import { CREATIVE_CHANNELS, CREATIVE_FORMATS, creativeStageInfo } from "../lib/creatives";
 import { relativeDate, shortDate, today } from "../lib/dates";
 import { createCreative, patchCreative, useApp } from "../lib/store";
 import type { Creative, CreativeStage } from "../lib/types";
@@ -17,10 +19,15 @@ export function CreativesPage() {
   const [format, setFormat] = useState("");
   const [client, setClient] = useState("");
   const [channel, setChannel] = useState("");
+  const [labelFilter, setLabelFilter] = useState<string[]>([]);
 
   const clients = useMemo(() => [...new Set(state.creatives.map((c) => c.client).filter(Boolean))].sort(), [state.creatives]);
   const creatives = state.creatives.filter(
-    (c) => (!format || c.format === format) && (!client || c.client === client) && (!channel || c.channels.includes(channel)),
+    (c) =>
+      (!format || c.format === format) &&
+      (!client || c.client === client) &&
+      (!channel || c.channels.includes(channel)) &&
+      (!labelFilter.length || labelFilter.some((id) => c.labelIds.includes(id))),
   );
 
   const newCreative = (stage: CreativeStage = "ideia") => {
@@ -29,7 +36,7 @@ export function CreativesPage() {
   };
 
   return (
-    <div className="page wide" style={{ maxWidth: 1500 }}>
+    <div className={cx("page wide", view === "pipeline" && "page-board")} style={view === "pipeline" ? undefined : { maxWidth: 1500 }}>
       <div className="page-head">
         <div>
           <h1 className="page-title">Criativos</h1>
@@ -43,7 +50,7 @@ export function CreativesPage() {
         value={view}
         onChange={setView}
         items={[
-          { value: "pipeline", label: "Pipeline" },
+          { value: "pipeline", label: "Quadro" },
           { value: "galeria", label: "Galeria" },
           { value: "calendario", label: "Calendário de entregas" },
           { value: "tabela", label: "Tabela" },
@@ -77,7 +84,12 @@ export function CreativesPage() {
         )}
       </div>
 
-      {view === "pipeline" && <Pipeline creatives={creatives} onNew={newCreative} />}
+      {view === "pipeline" && (
+        <>
+          <BoardToolbar labelFilter={labelFilter} setLabelFilter={setLabelFilter} />
+          <CreativeBoardView creatives={creatives} />
+        </>
+      )}
       {view === "galeria" && <Gallery creatives={creatives} />}
       {view === "calendario" && (
         <MonthCalendar
@@ -143,74 +155,6 @@ function CardMeta({ c }: { c: Creative }) {
   );
 }
 
-function Pipeline({ creatives, onNew }: { creatives: Creative[]; onNew: (stage: CreativeStage) => void }) {
-  const [over, setOver] = useState<CreativeStage | null>(null);
-  const [dragging, setDragging] = useState<string | null>(null);
-  const [showAllDone, setShowAllDone] = useState(false);
-
-  return (
-    <div className="board" style={{ gridAutoColumns: "minmax(180px, 1fr)" }}>
-      {CREATIVE_STAGES.map((stage) => {
-        let items = creatives.filter((c) => c.stage === stage.value).sort((a, b) => (a.dueDate || "9999").localeCompare(b.dueDate || "9999"));
-        const total = items.length;
-        if (stage.value === "entregue") {
-          items = items.sort((a, b) => (b.dueDate || "").localeCompare(a.dueDate || ""));
-          if (!showAllDone) items = items.slice(0, 3);
-        }
-        return (
-          <div
-            key={stage.value}
-            className={cx("board-col", over === stage.value && "drop")}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setOver(stage.value);
-            }}
-            onDragLeave={() => setOver((o) => (o === stage.value ? null : o))}
-            onDrop={(e) => {
-              e.preventDefault();
-              setOver(null);
-              const id = e.dataTransfer.getData("text/plain");
-              if (id) patchCreative(id, { stage: stage.value });
-            }}
-          >
-            <div className="board-col-head">
-              <span className={cx("pill", stage.color)}>{stage.label}</span>
-              <span className="muted">{total}</span>
-            </div>
-            {items.map((c) => (
-              <div
-                key={c.id}
-                className={cx("board-card", dragging === c.id && "dragging")}
-                draggable
-                onDragStart={(e) => {
-                  e.dataTransfer.setData("text/plain", c.id);
-                  setDragging(c.id);
-                }}
-                onDragEnd={() => setDragging(null)}
-                onClick={() => navigate(`/criativos/${c.id}`)}
-              >
-                {c.moodboard[0] && <img src={c.moodboard[0].src} alt="" style={{ width: "100%", height: 90, objectFit: "cover", borderRadius: 4 }} />}
-                <span className="c-title">{c.title || "Sem título"}</span>
-                <CardMeta c={c} />
-              </div>
-            ))}
-            {stage.value === "entregue" && total > 3 && (
-              <button className="link-btn" style={{ padding: "4px 6px" }} onClick={() => setShowAllDone(!showAllDone)}>
-                {showAllDone ? "Mostrar menos" : `Ver os ${total}`}
-              </button>
-            )}
-            {stage.value !== "entregue" && (
-              <button className="link-btn" style={{ padding: "4px 6px" }} onClick={() => onNew(stage.value)}>
-                <Plus size={14} /> Novo
-              </button>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 function Gallery({ creatives }: { creatives: Creative[] }) {
   if (!creatives.length) return <Empty>Nenhum criativo encontrado.</Empty>;
   const sorted = [...creatives].sort((a, b) => b.updatedAt - a.updatedAt);
@@ -221,8 +165,8 @@ function Gallery({ creatives }: { creatives: Creative[] }) {
         return (
           <div key={c.id} className="gallery-card" onClick={() => navigate(`/criativos/${c.id}`)}>
             <div className="gallery-cover" style={c.palette[0] ? { background: c.palette[0] } : undefined}>
-              {c.moodboard[0] ? (
-                <img src={c.moodboard[0].src} alt="" />
+              {c.cover || c.moodboard[0] ? (
+                <img src={c.cover || c.moodboard[0].src} alt="" />
               ) : c.headline ? (
                 <span style={{ color: c.palette[1] || undefined }}>{c.headline}</span>
               ) : (
@@ -255,7 +199,8 @@ function CreativeTable({ creatives }: { creatives: Creative[] }) {
         <thead>
           <tr>
             <th>Título</th>
-            <th>Etapa</th>
+            <th>Lista</th>
+            <th>Etiquetas</th>
             <th>Formato</th>
             <th>Canais</th>
             <th>Cliente</th>
@@ -265,13 +210,18 @@ function CreativeTable({ creatives }: { creatives: Creative[] }) {
         </thead>
         <tbody>
           {sorted.map((c) => {
-            const info = creativeStageInfo(c.stage);
             const tasks = state.tasks.filter((t) => t.creativeId === c.id);
             return (
               <tr key={c.id} className="click" onClick={() => navigate(`/criativos/${c.id}`)}>
                 <td style={{ fontWeight: 500 }}>{c.title || "Sem título"}</td>
+                <td className="text-2">{state.creativeBoard.columns.find((col) => col.id === c.columnId)?.title || <span className="muted">—</span>}</td>
                 <td>
-                  <span className={cx("pill", info.color)}>{info.label}</span>
+                  <span className="row wrap" style={{ gap: 4 }}>
+                    {c.labelIds.map((id) => {
+                      const l = state.creativeBoard.labels.find((x) => x.id === id);
+                      return l ? <LabelChip key={id} label={l} /> : null;
+                    })}
+                  </span>
                 </td>
                 <td>
                   {c.format} {c.size && <span className="muted num">· {c.size}</span>}

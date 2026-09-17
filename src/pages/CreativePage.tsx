@@ -1,6 +1,9 @@
-import { ArrowDown, ArrowLeft, ArrowUp, ExternalLink, ImagePlus, Plus, Star, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, CheckSquare, ExternalLink, Image as ImageIcon, ImagePlus, Pin, Plus, Star, Tag, Trash2, X } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { BlockEditor } from "../components/BlockEditor";
+import { LabelChip, pickImage, Popover, PopItem } from "../components/creatives/Board";
+import { LabelPicker } from "../components/creatives/BoardTools";
+import { checklistProgress, dueState } from "../lib/board";
 import { AiFieldButton } from "../components/AiWriter";
 import { AutoTextarea, Checkbox, Empty, Modal } from "../components/common";
 import { blocksToMarkdown } from "../lib/ai";
@@ -9,6 +12,7 @@ import { relativeDate, today } from "../lib/dates";
 import {
   appStore,
   createTask,
+  moveCreative,
   deleteCreative,
   generateCreativeTasks,
   isFavorite,
@@ -72,6 +76,10 @@ function CreativeDetail({ creative }: { creative: Creative }) {
           <ArrowLeft size={14} /> Criativos
         </button>
         <span className="grow" />
+        <CoverButton creative={creative} />
+        <button className={cx("btn sm", creative.pinned && "active")} onClick={() => set({ pinned: !creative.pinned })} title="Mantém o cartão no topo da lista">
+          <Pin size={14} /> {creative.pinned ? "Fixado" : "Fixar no topo"}
+        </button>
         {creative.fileUrl && (
           <a className="btn sm" href={creative.fileUrl} target="_blank" rel="noreferrer">
             <ExternalLink size={14} /> Abrir arquivo
@@ -85,6 +93,12 @@ function CreativeDetail({ creative }: { creative: Creative }) {
         </button>
       </div>
 
+      {creative.cover && (
+        <div className="cp-cover">
+          <img src={creative.cover} alt="" />
+        </div>
+      )}
+
       <div className="video-layout">
         <div style={{ minWidth: 0 }}>
           <AutoTextarea
@@ -96,6 +110,22 @@ function CreativeDetail({ creative }: { creative: Creative }) {
             onChange={(e) => set({ title: e.target.value.replace(/\n/g, "") })}
           />
           <div className="props">
+            <span className="prop-k">Lista</span>
+            <span className="prop-v">
+              <select className="select bare" value={creative.columnId || ""} onChange={(e) => moveCreative(creative.id, e.target.value, null)} aria-label="Lista do quadro">
+                {state.creativeBoard.columns.map((col) => (
+                  <option key={col.id} value={col.id}>
+                    {col.title}
+                  </option>
+                ))}
+              </select>
+            </span>
+
+            <span className="prop-k">Etiquetas</span>
+            <span className="prop-v" style={{ gap: 4 }}>
+              <CardLabels creative={creative} />
+            </span>
+
             <span className="prop-k">Etapa</span>
             <span className="prop-v">
               <select className="select bare" value={creative.stage} onChange={(e) => set({ stage: e.target.value as CreativeStage })} aria-label="Etapa">
@@ -153,8 +183,27 @@ function CreativeDetail({ creative }: { creative: Creative }) {
 
             <span className="prop-k">Entrega</span>
             <span className="prop-v">
-              <input className="input bare" type="date" value={creative.dueDate || ""} onChange={(e) => set({ dueDate: e.target.value || null })} aria-label="Data de entrega" />
-              {creative.dueDate && <span className={cx("muted", creative.dueDate < today() && creative.stage !== "entregue" && "red")}>{relativeDate(creative.dueDate)}</span>}
+              <input
+                className="input bare"
+                type="date"
+                style={{ width: "auto" }}
+                value={creative.startDate || ""}
+                max={creative.dueDate || undefined}
+                onChange={(e) => set({ startDate: e.target.value || null })}
+                aria-label="Data de início"
+                title="Início"
+              />
+              <span className="muted">→</span>
+              <input className="input bare" type="date" style={{ width: "auto" }} value={creative.dueDate || ""} onChange={(e) => set({ dueDate: e.target.value || null })} aria-label="Data de entrega" title="Entrega" />
+              {creative.dueDate && (
+                <>
+                  <input className="input bare" type="time" style={{ width: "auto" }} value={creative.dueTime} onChange={(e) => set({ dueTime: e.target.value })} aria-label="Horário de entrega" />
+                  <label className="row" style={{ gap: 6, fontSize: 13, cursor: "pointer" }}>
+                    <input type="checkbox" checked={creative.dueDone} onChange={(e) => set({ dueDone: e.target.checked })} /> Concluído
+                  </label>
+                  <span className={cx("tbadge", "due-" + dueState(creative))}>{relativeDate(creative.dueDate)}</span>
+                </>
+              )}
             </span>
 
             <span className="prop-k">Arquivo</span>
@@ -219,6 +268,7 @@ function CreativeDetail({ creative }: { creative: Creative }) {
         </div>
 
         <aside className="stack" style={{ gap: 14 }}>
+          <CardChecklist creative={creative} />
           <FormatPreview creative={creative} />
           <VisualIdentity creative={creative} />
           <CreativeTasks creative={creative} />
@@ -226,6 +276,145 @@ function CreativeDetail({ creative }: { creative: Creative }) {
         </aside>
       </div>
     </div>
+  );
+}
+
+function CoverButton({ creative }: { creative: Creative }) {
+  const [rect, setRect] = useState<DOMRect | null>(null);
+  const [url, setUrl] = useState("");
+  const set = (cover: string | null) => patchCreative(creative.id, { cover });
+  return (
+    <>
+      <button className="btn sm" onClick={(e) => setRect(e.currentTarget.getBoundingClientRect())}>
+        <ImageIcon size={14} /> Capa
+      </button>
+      {rect && (
+        <Popover anchor={rect} onClose={() => setRect(null)}>
+          <div className="pop-title">Capa do cartão</div>
+          {creative.cover && (
+            <div className="pop-preview">
+              <img src={creative.cover} alt="" />
+            </div>
+          )}
+          <PopItem
+            icon={<ImageIcon size={15} />}
+            onClick={async () => {
+              setRect(null);
+              const img = await pickImage(1000);
+              if (img) set(img);
+            }}
+          >
+            {creative.cover ? "Trocar imagem" : "Enviar imagem"}
+          </PopItem>
+          {creative.moodboard.length > 0 && (
+            <>
+              <p className="pop-hint">Ou use uma imagem do moodboard:</p>
+              <div className="pop-thumbs">
+                {creative.moodboard.slice(0, 8).map((m) => (
+                  <button key={m.id} onClick={() => (set(m.src), setRect(null))} title="Usar como capa">
+                    <img src={m.src} alt="" />
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+          <form
+            className="pop-url"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!/^https?:\/\//.test(url.trim())) return ui.toast("Cole um link que comece com https://");
+              set(url.trim());
+              setUrl("");
+              setRect(null);
+            }}
+          >
+            <input className="input" placeholder="…ou cole o link da imagem" value={url} onChange={(e) => setUrl(e.target.value)} aria-label="Link da imagem" />
+          </form>
+          {creative.cover && (
+            <PopItem icon={<Trash2 size={15} />} danger onClick={() => (set(null), setRect(null))}>
+              Remover capa
+            </PopItem>
+          )}
+        </Popover>
+      )}
+    </>
+  );
+}
+
+function CardLabels({ creative }: { creative: Creative }) {
+  const state = useApp();
+  const [rect, setRect] = useState<DOMRect | null>(null);
+  const toggle = (id: string) =>
+    patchCreative(creative.id, { labelIds: creative.labelIds.includes(id) ? creative.labelIds.filter((x) => x !== id) : [...creative.labelIds, id] });
+  return (
+    <>
+      {creative.labelIds.map((id) => {
+        const l = state.creativeBoard.labels.find((x) => x.id === id);
+        return l ? <LabelChip key={id} label={l} /> : null;
+      })}
+      <button className="btn ghost sm" onClick={(e) => setRect(e.currentTarget.getBoundingClientRect())} aria-label="Escolher etiquetas">
+        {creative.labelIds.length ? (
+          <Plus size={14} />
+        ) : (
+          <>
+            <Tag size={14} /> Adicionar
+          </>
+        )}
+      </button>
+      {rect && (
+        <Popover anchor={rect} onClose={() => setRect(null)} width={300}>
+          <div className="pop-title">Etiquetas</div>
+          <LabelPicker selected={creative.labelIds} onToggle={toggle} />
+        </Popover>
+      )}
+    </>
+  );
+}
+
+function CardChecklist({ creative }: { creative: Creative }) {
+  const [text, setText] = useState("");
+  const items = creative.checklist;
+  const set = (checklist: Creative["checklist"]) => patchCreative(creative.id, { checklist });
+  const { done, total } = checklistProgress(items);
+  const add = () => {
+    const t = text.trim();
+    if (!t) return;
+    set([...items, { id: uid(), text: t, done: false }]);
+    setText("");
+  };
+  return (
+    <section className="card">
+      <div className="card-title">
+        <span className="row" style={{ gap: 6 }}>
+          <CheckSquare size={14} /> Checklist {total > 0 && <span className="muted num">{done}/{total}</span>}
+        </span>
+      </div>
+      {total > 0 && (
+        <div className="cl-bar" aria-hidden>
+          <span style={{ width: `${Math.round((done / total) * 100)}%` }} className={cx(done === total && "full")} />
+        </div>
+      )}
+      <div className="stack" style={{ gap: 2 }}>
+        {items.map((it) => (
+          <div key={it.id} className={cx("cl-item", it.done && "done")}>
+            <Checkbox checked={it.done} onChange={(v) => set(items.map((x) => (x.id === it.id ? { ...x, done: v } : x)))} label={it.text} />
+            <input className="input bare grow" value={it.text} onChange={(e) => set(items.map((x) => (x.id === it.id ? { ...x, text: e.target.value } : x)))} aria-label="Item" />
+            <button className="icon-btn" aria-label="Remover item" onClick={() => set(items.filter((x) => x.id !== it.id))}>
+              <X size={13} />
+            </button>
+          </div>
+        ))}
+      </div>
+      <input
+        className="input"
+        style={{ marginTop: 6 }}
+        placeholder="Adicionar item e Enter"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && add()}
+        aria-label="Novo item da checklist"
+      />
+    </section>
   );
 }
 

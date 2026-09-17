@@ -122,8 +122,60 @@ export interface CreativeSlide {
   text: string;
 }
 
+/** Lista do quadro de criativos (como no Trello). */
+export interface BoardColumn {
+  id: string;
+  title: string;
+  /** imagem fixada no topo da lista (data URL ou link) */
+  cover: string | null;
+  /** mostrar o nome da lista por cima da capa */
+  coverTitle: boolean;
+  /** cartões desta lista contam como concluídos */
+  done: boolean;
+}
+
+export type LabelColor =
+  | "green" | "yellow" | "orange" | "red" | "purple" | "blue" | "sky" | "lime" | "pink" | "black"
+  | "green_light" | "yellow_light" | "orange_light" | "red_light" | "purple_light" | "blue_light" | "sky_light" | "lime_light" | "pink_light" | "black_light"
+  | "green_dark" | "yellow_dark" | "orange_dark" | "red_dark" | "purple_dark" | "blue_dark" | "sky_dark" | "lime_dark" | "pink_dark" | "black_dark";
+
+export interface BoardLabel {
+  id: string;
+  name: string;
+  color: LabelColor;
+}
+
+export interface CreativeBoard {
+  columns: BoardColumn[];
+  labels: BoardLabel[];
+  /** imagem de fundo do quadro */
+  background: string | null;
+}
+
+export interface ChecklistItem {
+  id: string;
+  text: string;
+  done: boolean;
+}
+
 export interface Creative {
   id: string;
+  /** lista do quadro */
+  columnId: string | null;
+  /** posição dentro da lista */
+  order: number;
+  labelIds: string[];
+  /** imagem de capa do cartão */
+  cover: string | null;
+  /** fica no topo da lista */
+  pinned: boolean;
+  startDate: ISODate | null;
+  /** horário de entrega (HH:MM) */
+  dueTime: string;
+  dueDone: boolean;
+  checklist: ChecklistItem[];
+  /** cartão importado do Trello */
+  trelloId: string | null;
   title: string;
   stage: CreativeStage;
   format: string;
@@ -264,6 +316,7 @@ export interface AppState {
   notes: Note[];
   videos: Video[];
   creatives: Creative[];
+  creativeBoard: CreativeBoard;
   scriptTemplates: ScriptTemplate[];
   habits: Habit[];
   habitLogs: Record<string, Record<ISODate, number>>;

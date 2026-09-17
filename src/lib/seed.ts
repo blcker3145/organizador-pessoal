@@ -1,4 +1,5 @@
 import { addDays, monthKey, startOfWeek, today, weekday } from "./dates";
+import { boardFieldDefaults, defaultCreativeBoard, normalizeBoardState } from "./board";
 import { BRIEFING_SECTIONS } from "./creatives";
 import type { AppState, Block, Creative, Habit, Routine, Task, Transaction, Video } from "./types";
 import { uid } from "./util";
@@ -13,6 +14,7 @@ export function emptyState(): AppState {
     notes: [],
     videos: [],
     creatives: [],
+    creativeBoard: defaultCreativeBoard(),
     scriptTemplates: [
       { id: "tpl-longo", name: "YouTube longo", sections: ["Gancho (0–5 s)", "Contexto", "Desenvolvimento", "Chamada para ação"] },
       { id: "tpl-curto", name: "Vídeo curto", sections: ["Gancho (0–3 s)", "Conteúdo", "Final / CTA"] },
@@ -201,6 +203,7 @@ export function createSeed(): AppState {
   const briefing = (answers: string[]): Block[] =>
     BRIEFING_SECTIONS.flatMap((section, i) => [b("h2", section), b("p", answers[i] || "")]);
   const cr = (title: string, extra: Partial<Creative>): Creative => ({
+    ...boardFieldDefaults(),
     id: uid(),
     title,
     stage: "ideia",
@@ -468,7 +471,7 @@ export function createSeed(): AppState {
   s.budgets[key] = { income: 650000, limits: {} };
 
   s.favorites = [{ kind: "video", id: vSemana.id }];
-  return s;
+  return normalizeBoardState(s);
 }
 
 /** Gerador pseudoaleatório com semente, para o histórico de exemplo ser sempre igual. */

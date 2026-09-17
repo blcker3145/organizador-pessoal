@@ -15,6 +15,7 @@ import type {
   Video,
 } from "./types";
 import { textBlock, uid } from "./util";
+import { boardFieldDefaults, columnForStage, normalizeBoardState } from "./board";
 
 export const STATE_VERSION = 1;
 
@@ -23,7 +24,7 @@ export function normalizeState(raw: unknown): AppState | null {
   if (!raw || typeof raw !== "object") return null;
   const parsed = raw as AppState;
   if (parsed.version !== STATE_VERSION || !Array.isArray(parsed.tasks)) return null;
-  return { ...emptyState(), ...parsed };
+  return normalizeBoardState({ ...emptyState(), ...parsed });
 }
 
 // O estado começa vazio; a sessão (sync.ts) carrega os dados da conta ao entrar.
@@ -55,7 +56,7 @@ export function setState(fn: (s: AppState) => AppState) {
 }
 
 export function replaceState(next: AppState) {
-  appStore.set({ ...emptyState(), ...next, version: STATE_VERSION });
+  appStore.set(normalizeBoardState({ ...emptyState(), ...next, version: STATE_VERSION }));
 }
 
 /* ---------------- Tarefas ---------------- */
@@ -266,7 +267,9 @@ export function generateProductionTasks(videoId: string): number {
 /* ---------------- Criativos ---------------- */
 
 export function createCreative(partial: Partial<Creative> = {}): Creative {
+  const board = appStore.get().creativeBoard;
   const c: Creative = {
+    ...boardFieldDefaults(),
     id: uid(),
     title: "",
     stage: "ideia",
@@ -290,6 +293,7 @@ export function createCreative(partial: Partial<Creative> = {}): Creative {
     updatedAt: Date.now(),
     ...partial,
   };
+  if (!c.columnId || !board.columns.some((col) => col.id === c.columnId)) c.columnId = columnForStage(board, c.stage);
   insert("creatives", c);
   return c;
 }
@@ -482,4 +486,55 @@ export function resetToSeed() {
 
 export function clearAll() {
   appStore.set(emptyState());
+}
+
+/* ---------- Quadro de criativos ---------- */
+
+export function setBoard(fn: (b: AppState["creativeBoard"]) => AppState["creativeBoard"]) {
+  update((s) => ({ ...s, creativeBoard: fn(s.creativeBoard) }));
+}
+
+/** Move um cartão para outra lista (e posição), mantendo a etapa coerente com listas de "concluído". */
+export function moveCreative(id: string, columnId: string, beforeId: string | null) {
+  update((s) => {
+    const card = s.creatives.find((c) => c.id === id);
+    const target = s.creativeBoard.columns.find((c) => c.id === columnId);
+    if (!card || !target) return s;
+    const others = s.creatives
+      .filter((c) => c.columnId === columnId && c.id !== id)
+      .sort((a, b) => Number(b.pinned) - Number(a.pinned) || a.order - b.order);
+    const at = beforeId ? others.findIndex((c) => c.id === beforeId) : -1;
+    const list = [...others];
+    list.splice(at < 0 ? list.length : at, 0, card);
+    const orders = new Map(list.map((c, i) => [c.id, (i + 1) * 1000]));
+    let stage = card.stage;
+    if (target.done) stage = "entregue";
+    else if (card.stage === "entregue") stage = "criacao";
+    return {
+      ...s,
+      creatives: s.creatives.map((c) => {
+        if (c.id === id) return { ...c, columnId, stage, order: orders.get(c.id)!, updatedAt: Date.now() };
+        return orders.has(c.id) ? { ...c, order: orders.get(c.id)! } : c;
+      }),
+    };
+  });
+}
+
+/** Remove uma lista; os cartões dela vão para a lista indicada. */
+export function deleteBoardColumn(columnId: string, moveTo: string | null) {
+  update((s) => ({
+    ...s,
+    creativeBoard: { ...s.creativeBoard, columns: s.creativeBoard.columns.filter((c) => c.id !== columnId) },
+    creatives: moveTo
+      ? s.creatives.map((c) => (c.columnId === columnId ? { ...c, columnId: moveTo } : c))
+      : s.creatives.filter((c) => c.columnId !== columnId),
+  }));
+}
+
+export function deleteBoardLabel(labelId: string) {
+  update((s) => ({
+    ...s,
+    creativeBoard: { ...s.creativeBoard, labels: s.creativeBoard.labels.filter((l) => l.id !== labelId) },
+    creatives: s.creatives.map((c) => (c.labelIds.includes(labelId) ? { ...c, labelIds: c.labelIds.filter((x) => x !== labelId) } : c)),
+  }));
 }
