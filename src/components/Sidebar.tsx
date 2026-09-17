@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useApp } from "../lib/store";
+import { useSession } from "../lib/sync";
 import { AccountBox } from "./Auth";
 import { navigate, ui, useRoute } from "../lib/ui";
 import { cx } from "../lib/util";
@@ -43,6 +44,11 @@ function isActive(current: string, path: string) {
 export function Sidebar() {
   const { path } = useRoute();
   const state = useApp();
+  const { user } = useSession();
+  // nome do perfil, depois o nome do cadastro, depois o começo do e-mail
+  const metaName = (user?.user_metadata?.name as string | undefined)?.trim();
+  const emailName = user?.email?.split("@")[0] || "";
+  const displayName = state.profile.name.trim() || metaName || emailName || "Meu espaço";
   const favorites = state.favorites
     .map((f) => {
       if (f.kind === "note") {
@@ -62,7 +68,9 @@ export function Sidebar() {
     <nav className="sidebar" aria-label="Navegação principal">
       <div className="side-ws">
         <NeuronLogo size={24} className="brand-logo" />
-        <span className="ellipsis">{state.profile.name ? `Espaço de ${state.profile.name}` : "Meu espaço"}</span>
+        <span className="ellipsis" title={user?.email || undefined}>
+          {displayName}
+        </span>
       </div>
       <button className="side-item" onClick={ui.openPalette}>
         <Search size={16} /> Buscar <kbd>Ctrl K</kbd>
