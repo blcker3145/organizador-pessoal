@@ -655,7 +655,7 @@ function Moodboard({ creative }: { creative: Creative }) {
       </p>
       {open && (
         <Modal title={open.caption || "Referência"} onClose={() => setOpen(null)} width={900}>
-          <img src={open.src} alt={open.caption || "Referência"} style={{ width: "100%", borderRadius: 6 }} />
+          <img src={open.src} alt={open.caption || "Referência"} style={{ display: "block", margin: "0 auto", maxWidth: "100%", maxHeight: "72vh", borderRadius: 6 }} />
         </Modal>
       )}
     </>
