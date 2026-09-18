@@ -115,7 +115,21 @@ async function callOpenAi(key: string, messages: ChatMessage[], tools: ToolDef[]
 /* ---------------- Google Gemini (API nativa) ---------------- */
 
 const GEMINI_API = "https://generativelanguage.googleapis.com/v1beta";
-const GEMINI_PREFERRED = ["gemini-flash-latest", "gemini-3-flash", "gemini-2.5-flash", "gemini-2.0-flash"];
+// Escrita comum vai no modelo mais rápido; quando há ferramentas (assistente), começa no flash completo.
+const GEMINI_FAST = ["gemini-2.5-flash-lite", "gemini-flash-lite-latest", "gemini-2.0-flash-lite"];
+const GEMINI_PREFERRED = ["gemini-flash-latest", "gemini-2.5-flash", "gemini-2.0-flash"];
+/** Tempo máximo esperando um modelo antes de tentar o próximo. */
+const ATTEMPT_TIMEOUT_MS = 12_000;
+
+async function fetchWithTimeout(url: string, init: RequestInit, ms: number) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  try {
+    return await fetch(url, { ...init, signal: ctrl.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
 let geminiModel = Deno.env.get("GEMINI_MODEL") || "";
 /** Modelos de reserva, na ordem de tentativa, para quando o principal estiver sobrecarregado. */
 let geminiFallbacks: string[] = ["gemini-2.5-flash", "gemini-flash-lite-latest"];
@@ -123,7 +137,7 @@ let geminiFallbacks: string[] = ["gemini-2.5-flash", "gemini-flash-lite-latest"]
 async function pickGeminiModel(key: string): Promise<string> {
   if (geminiModel) return geminiModel;
   try {
-    const res = await fetch(`${GEMINI_API}/models?pageSize=200`, { headers: { "x-goog-api-key": key } });
+    const res = await fetchWithTimeout(`${GEMINI_API}/models?pageSize=200`, { headers: { "x-goog-api-key": key } }, 4000);
     if (res.ok) {
       const models: { name: string; supportedGenerationMethods?: string[] }[] = (await res.json()).models || [];
       const ids = models
@@ -227,9 +241,16 @@ function toGeminiRequest(messages: ChatMessage[], tools: ToolDef[] | undefined) 
 }
 
 async function callGemini(key: string, messages: ChatMessage[], tools: ToolDef[] | undefined): Promise<AiReply> {
-  const primary = await pickGeminiModel(key);
-  const attempts = [primary, ...geminiFallbacks.filter((m) => m !== primary)].slice(0, 3);
-  const payload = JSON.stringify(toGeminiRequest(messages, tools));
+  const withTools = !!tools?.length;
+  const primary = withTools ? await pickGeminiModel(key) : GEMINI_FAST[0];
+  // no caminho rápido nem consultamos a lista de modelos: já vai direto no pedido
+  const rest = withTools ? geminiFallbacks : [...GEMINI_FAST.slice(1), ...GEMINI_PREFERRED];
+  const attempts = [primary, ...rest.filter((m) => m !== primary)].slice(0, 3);
+  // escrever texto não precisa de raciocínio: desligar isso corta boa parte da espera
+  const request = toGeminiRequest(messages, tools) as Json;
+  request.generationConfig = withTools ? { maxOutputTokens: 4096 } : { maxOutputTokens: 2048, thinkingConfig: { thinkingBudget: 0 } };
+  const payload = JSON.stringify(request);
+  const noThinking = JSON.stringify({ ...request, generationConfig: { maxOutputTokens: withTools ? 4096 : 2048 } });
 
   let data: {
     candidates?: { content?: { parts?: Json[] }; finishReason?: string }[];
@@ -237,12 +258,30 @@ async function callGemini(key: string, messages: ChatMessage[], tools: ToolDef[]
   } | null = null;
   let model = primary;
   for (const candidate of attempts) {
-    const res = await fetch(`${GEMINI_API}/models/${candidate}:generateContent`, {
-      method: "POST",
-      headers: { "x-goog-api-key": key, "Content-Type": "application/json" },
-      body: payload,
-    });
-    const body = await res.json().catch(() => ({}));
+    let res: Response;
+    try {
+      res = await fetchWithTimeout(
+        `${GEMINI_API}/models/${candidate}:generateContent`,
+        { method: "POST", headers: { "x-goog-api-key": key, "Content-Type": "application/json" }, body: payload },
+        ATTEMPT_TIMEOUT_MS,
+      );
+    } catch {
+      continue; // demorou demais: vai para o próximo modelo
+    }
+    let body = await res.json().catch(() => ({}));
+    // alguns modelos não aceitam desligar o raciocínio: repete sem essa parte
+    if (!res.ok && /thinking/i.test(body?.error?.message || "")) {
+      try {
+        res = await fetchWithTimeout(
+          `${GEMINI_API}/models/${candidate}:generateContent`,
+          { method: "POST", headers: { "x-goog-api-key": key, "Content-Type": "application/json" }, body: noThinking },
+          ATTEMPT_TIMEOUT_MS,
+        );
+        body = await res.json().catch(() => ({}));
+      } catch {
+        continue;
+      }
+    }
     if (res.ok) {
       data = body;
       model = candidate;
