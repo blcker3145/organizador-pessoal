@@ -269,8 +269,8 @@ async function callGemini(key: string, messages: ChatMessage[], tools: ToolDef[]
       continue; // demorou demais: vai para o próximo modelo
     }
     let body = await res.json().catch(() => ({}));
-    // alguns modelos não aceitam desligar o raciocínio: repete sem essa parte
-    if (!res.ok && /thinking/i.test(body?.error?.message || "")) {
+    // alguns modelos recusam o pedido para desligar o raciocínio: repete sem essa parte
+    if (!res.ok && res.status === 400 && !withTools) {
       try {
         res = await fetchWithTimeout(
           `${GEMINI_API}/models/${candidate}:generateContent`,
