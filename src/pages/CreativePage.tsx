@@ -11,6 +11,7 @@ import {
   Image as ImageIcon,
   ImagePlus,
   Pin,
+  Pencil,
   Plus,
   Settings2,
   Star,
@@ -19,10 +20,11 @@ import {
   Type,
   X,
 } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BlockEditor } from "../components/BlockEditor";
 import { LabelChip, pickImage, Popover, PopItem } from "../components/creatives/Board";
 import { LabelPicker } from "../components/creatives/BoardTools";
+import { ReadBlocks } from "../components/ReadBlocks";
 import { checklistProgress, dueState, dueText } from "../lib/board";
 import { AiFieldButton } from "../components/AiWriter";
 import { AutoTextarea, Checkbox, Empty, Modal } from "../components/common";
@@ -41,7 +43,7 @@ import {
   toggleTask,
   useApp,
 } from "../lib/store";
-import type { Creative, CreativeImage, CreativeStage } from "../lib/types";
+import type { Block, Creative, CreativeImage, CreativeStage } from "../lib/types";
 import { navigate, ui } from "../lib/ui";
 import { cx, uid } from "../lib/util";
 
@@ -205,12 +207,7 @@ function CreativeDetail({ creative }: { creative: Creative }) {
           <h2 className="cd-sec-title">
             <AlignLeft size={16} /> Descrição
           </h2>
-          <BlockEditor
-            blocks={creative.briefing}
-            onChange={(briefing) => set({ briefing })}
-            emptyHint="Adicione uma descrição mais detalhada… digite / para títulos, listas e tarefas"
-            aiContext={creativeContext(creative) + ". Este texto é o briefing"}
-          />
+          <Description creative={creative} />
         </section>
 
         <CardChecklist creative={creative} />
@@ -303,6 +300,70 @@ function CreativeDetail({ creative }: { creative: Creative }) {
             <CreativeLinks creative={creative} />
           </div>
         </details>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Descrição no estilo do Trello: aparece pronta para ler e, com dois cliques
+ * (ou pelo botão Editar), vira editor com Salvar e Cancelar.
+ */
+function Description({ creative }: { creative: Creative }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<Block[]>(creative.briefing);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const empty = !creative.briefing.some((b) => b.text.trim() || b.type === "divider");
+
+  const open = () => {
+    setDraft(creative.briefing);
+    setEditing(true);
+  };
+  const save = () => {
+    patchCreative(creative.id, { briefing: draft });
+    setEditing(false);
+  };
+
+  // ao abrir, o cursor já fica no texto
+  useEffect(() => {
+    if (editing) boxRef.current?.querySelector<HTMLTextAreaElement>(".blk-text")?.focus();
+  }, [editing]);
+
+  if (!editing) {
+    return (
+      <div className="cd-desc" onDoubleClick={open} title="Dois cliques para editar">
+        {empty ? (
+          <button className="cd-desc-empty" onClick={open}>
+            Adicione uma descrição mais detalhada…
+          </button>
+        ) : (
+          <ReadBlocks blocks={creative.briefing} />
+        )}
+        <button className="btn ghost sm cd-desc-edit" onClick={open}>
+          <Pencil size={13} /> Editar
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="cd-desc editing" ref={boxRef} onKeyDown={(e) => (e.ctrlKey || e.metaKey) && e.key === "Enter" && save()}>
+      <BlockEditor
+        blocks={draft}
+        onChange={setDraft}
+        emptyHint="Adicione uma descrição mais detalhada… digite / para títulos, listas e tarefas"
+        aiContext={creativeContext(creative) + ". Este texto é o briefing"}
+      />
+      <div className="cd-desc-actions">
+        <button className="btn primary sm" onClick={save}>
+          Salvar
+        </button>
+        <button className="btn ghost sm" onClick={() => setEditing(false)}>
+          Cancelar
+        </button>
+        <span className="muted" style={{ fontSize: 12 }}>
+          Ctrl + Enter salva
+        </span>
       </div>
     </div>
   );

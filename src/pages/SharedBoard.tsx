@@ -5,9 +5,10 @@
 import { AlignLeft, CheckSquare, Clock, ExternalLink, Image as ImageIcon, Lock, MessageSquare, Paperclip, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { NeuronLogo } from "../components/Logo";
+import { ReadBlocks } from "../components/ReadBlocks";
 import { labelStyle } from "../lib/board";
 import { relativeDate } from "../lib/dates";
-import { hrefOf, splitLinks } from "../lib/links";
+import { hrefOf } from "../lib/links";
 import { fetchSharedBoard, postComment, requestComments, ShareError, type ShareComment, type SharedBoard as Shared, type SharedCreative } from "../lib/share";
 import { ui } from "../lib/ui";
 import { cx } from "../lib/util";
@@ -390,36 +391,3 @@ function Comments({
   );
 }
 
-/** Blocos do briefing sem poder editar, com os links clicáveis. */
-function ReadBlocks({ blocks }: { blocks: Shared["creatives"][number]["briefing"] }) {
-  return (
-    <div className="editor">
-      {blocks.map((b, i) =>
-        b.type === "divider" ? (
-          <div key={b.id} className="blk divider">
-            <hr />
-          </div>
-        ) : (
-          <div key={b.id} className={cx("blk", b.type, b.checked && "checked")}>
-            {b.type === "bullet" && <span className="marker">•</span>}
-            {b.type === "number" && <span className="marker">{blocks.slice(0, i).filter((x) => x.type === "number").length + 1}.</span>}
-            {b.type === "todo" && <span className="marker">{b.checked ? "☑" : "☐"}</span>}
-            <span className="blk-field">
-              <span className="blk-links" style={{ position: "static" }}>
-                {splitLinks(b.text).map((part, k) =>
-                  part.href ? (
-                    <a key={k} href={part.href} target="_blank" rel="noreferrer">
-                      {part.text}
-                    </a>
-                  ) : (
-                    <span key={k}>{part.text}</span>
-                  ),
-                )}
-              </span>
-            </span>
-          </div>
-        ),
-      )}
-    </div>
-  );
-}
