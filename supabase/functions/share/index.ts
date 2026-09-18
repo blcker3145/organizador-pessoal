@@ -66,7 +66,8 @@ async function findShare(db: SupabaseClient, token: string): Promise<Share> {
   if (!token || token.length < 10) throw new HttpError(404, "Link inválido.");
   const { data, error } = await db.from("board_shares").select("id, owner_id, title, allow_comments, revoked").eq("token", token).maybeSingle();
   if (error) throw new HttpError(500, "Não foi possível abrir este link agora.");
-  if (!data || data.revoked) throw new HttpError(404, "Este link foi desativado por quem compartilhou.");
+  if (!data) throw new HttpError(404, "Este link não existe. Confira o endereço.");
+  if (data.revoked) throw new HttpError(404, "Este link foi desativado por quem compartilhou.");
   return data as Share;
 }
 
