@@ -455,6 +455,10 @@ button.pill { cursor: pointer; }
 /* a prévia mostra a imagem inteira, na proporção original (nada de corte) */
 .mood-item img { display: block; width: 100%; height: auto; max-height: 460px; object-fit: contain; object-position: top center; border-radius: 6px; cursor: zoom-in; background: var(--bg-soft); }
 .mood-item .input { min-height: 26px; font-size: 12.5px; }
+/* ver a referência: a imagem se ajusta à janela, sem barra de rolagem */
+.modal.mood-view { overflow: hidden; width: auto; max-width: min(92vw, 900px); }
+.mood-view .modal-body { padding: 4px 16px 16px; }
+.mood-view img { display: block; margin: 0 auto; max-width: min(88vw, 860px); max-height: calc(76vh - 80px); width: auto; height: auto; border-radius: 6px; }
 .mood-remove { position: absolute; top: 4px; right: 4px; background: var(--bg-elev); box-shadow: var(--shadow); opacity: 0; }
 .mood-item:hover .mood-remove, .mood-remove:focus-visible { opacity: 1; }
 @media (hover: none) { .mood-remove { opacity: 1; } }

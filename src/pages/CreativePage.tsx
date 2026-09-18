@@ -654,8 +654,8 @@ function Moodboard({ creative }: { creative: Creative }) {
         As imagens enviadas são reduzidas e ficam salvas neste navegador, que tem espaço limitado. Para muitas referências, prefira links.
       </p>
       {open && (
-        <Modal title={open.caption || "Referência"} onClose={() => setOpen(null)} width={900}>
-          <img src={open.src} alt={open.caption || "Referência"} style={{ display: "block", margin: "0 auto", maxWidth: "100%", maxHeight: "72vh", borderRadius: 6 }} />
+        <Modal title={open.caption || "Referência"} onClose={() => setOpen(null)} width={900} className="mood-view">
+          <img src={open.src} alt={open.caption || "Referência"} />
         </Modal>
       )}
     </>
