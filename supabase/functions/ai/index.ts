@@ -117,7 +117,7 @@ async function callOpenAi(key: string, messages: ChatMessage[], tools: ToolDef[]
 const GEMINI_API = "https://generativelanguage.googleapis.com/v1beta";
 // Escrita comum vai no modelo mais rápido; quando há ferramentas (assistente), começa no flash completo.
 const GEMINI_FAST = ["gemini-flash-lite-latest", "gemini-2.5-flash-lite", "gemini-2.0-flash-lite"];
-const GEMINI_PREFERRED = ["gemini-flash-latest", "gemini-2.5-flash", "gemini-2.0-flash"];
+const GEMINI_PREFERRED = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-2.0-flash"];
 /** Tempo máximo esperando um modelo antes de tentar o próximo. */
 const ATTEMPT_TIMEOUT_MS = 12_000;
 /** Com ferramentas o modelo pensa mais, então vale esperar um pouco a mais. */
@@ -244,10 +244,10 @@ function toGeminiRequest(messages: ChatMessage[], tools: ToolDef[] | undefined) 
 
 async function callGemini(key: string, messages: ChatMessage[], tools: ToolDef[] | undefined): Promise<AiReply> {
   const withTools = !!tools?.length;
-  // o modelo leve responde em segundos e também sabe usar ferramentas;
-  // os "flash" ficam de reserva, porque às vezes demoram demais
-  const primary = GEMINI_FAST[0];
-  const rest = withTools ? [...GEMINI_PREFERRED, ...GEMINI_FAST.slice(1)] : [...GEMINI_FAST.slice(1), ...GEMINI_PREFERRED];
+  // escrever texto vai no modelo leve (responde em segundos); o assistente, que usa
+  // ferramentas, vai no flash, que lida melhor com elas
+  const primary = withTools ? GEMINI_PREFERRED[0] : GEMINI_FAST[0];
+  const rest = withTools ? [...GEMINI_PREFERRED.slice(1), ...GEMINI_FAST] : [...GEMINI_FAST.slice(1), ...GEMINI_PREFERRED];
   const attempts = [primary, ...rest.filter((m) => m !== primary)].slice(0, 3);
   // escrever texto não precisa de raciocínio: desligar isso corta boa parte da espera
   const request = toGeminiRequest(messages, tools) as Json;
