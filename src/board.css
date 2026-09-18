@@ -250,13 +250,13 @@
 }
 
 /* ---------- página do criativo (simples, estilo cartão do Trello) ---------- */
-.cd-page { max-width: 1080px; }
+.cd-page { max-width: 960px; }
 .cd-top { display: flex; align-items: center; gap: 2px; margin-bottom: 14px; }
 .cd-top .btn.sm { gap: 4px; }
 .icon-btn.on-accent { color: var(--accent); }
 .cd-title { margin-bottom: 14px; }
 
-.cd-meta { display: flex; flex-wrap: wrap; gap: 14px 22px; padding-bottom: 20px; margin-bottom: 8px; border-bottom: 1px solid var(--line); }
+.cd-meta { display: flex; flex-wrap: wrap; gap: 12px 18px; padding-bottom: 20px; margin-bottom: 8px; border-bottom: 1px solid var(--line); }
 .cd-meta-item { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .cd-meta-k { font-size: 12px; font-weight: 500; color: var(--text-3); }
 .cd-chip {
@@ -276,8 +276,12 @@
 .cd-meta .btn.ghost.sm { height: 32px; border: 1px dashed var(--line-strong); border-radius: 8px; }
 .cd-meta .tlabel { height: 32px; line-height: 32px; font-size: 13px; padding: 0 12px; border-radius: 8px; }
 
-.cd-grid { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 36px; align-items: start; margin-top: 18px; }
-.cd-main { min-width: 0; display: flex; flex-direction: column; gap: 26px; }
+.cd-main { min-width: 0; display: flex; flex-direction: column; gap: 26px; margin-top: 18px; }
+/* a antiga lateral virou esta seção, que só abre quando você precisa dela */
+.cd-extra { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 22px 34px; margin: 14px 0 4px; align-items: start; }
+.cd-extra .cd-sec-title.sub { margin-top: 0; }
+.cd-chip-input { border: 0; background: none; color: inherit; font: inherit; width: 92px; min-width: 0; padding: 0; outline: none; }
+.cd-chip-input::placeholder { color: var(--text-3); }
 .cd-sec { min-width: 0; }
 .cd-sec-title { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 15px; font-weight: 600; color: var(--text); }
 .cd-sec-title svg { color: var(--text-3); flex: none; }
@@ -290,7 +294,6 @@
 .cd-fold[open] .cd-fold-ico { transform: none; }
 .cd-main .editor { min-height: 60px; }
 
-.cd-side { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 16px; }
 .cd-dl { display: grid; grid-template-columns: 70px minmax(0, 1fr); align-items: center; gap: 2px 8px; margin: 0; }
 .cd-dl dt { font-size: 12.5px; color: var(--text-3); }
 .cd-dl dd { margin: 0; min-width: 0; }
@@ -305,6 +308,5 @@
 .cd-dates .input { height: 34px; }
 
 @media (max-width: 900px) {
-  .cd-grid { grid-template-columns: minmax(0, 1fr); gap: 24px; }
-  .cd-side { position: static; }
+  .cd-extra { grid-template-columns: minmax(0, 1fr); gap: 20px; }
 }

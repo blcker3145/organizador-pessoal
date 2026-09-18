@@ -12,6 +12,7 @@ import {
   ImagePlus,
   Pin,
   Plus,
+  Settings2,
   Star,
   Tag,
   Trash2,
@@ -89,6 +90,7 @@ function CreativeDetail({ creative }: { creative: Creative }) {
   };
 
   const hasTexts = !!(creative.headline || creative.bodyText || creative.cta || creative.slides.length);
+  const hasExtras = !!(creative.channels.length || creative.size || creative.fileUrl || creative.palette.length || creative.fonts || creative.references.length);
 
   return (
     <div className="page cd-page">
@@ -160,6 +162,30 @@ function CreativeDetail({ creative }: { creative: Creative }) {
           <DatesChip creative={creative} />
         </div>
         <div className="cd-meta-item">
+          <span className="cd-meta-k">Etapa</span>
+          <label className="cd-chip select-chip">
+            <select value={creative.stage} onChange={(e) => set({ stage: e.target.value as CreativeStage })} aria-label="Etapa">
+              {CREATIVE_STAGES.map((st) => (
+                <option key={st.value} value={st.value}>
+                  {st.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown size={13} />
+          </label>
+        </div>
+        <div className="cd-meta-item">
+          <span className="cd-meta-k">Cliente</span>
+          <label className="cd-chip">
+            <input className="cd-chip-input" list="creative-clients" placeholder="Perfil próprio" value={creative.client} onChange={(e) => set({ client: e.target.value })} aria-label="Cliente ou marca" />
+            <datalist id="creative-clients">
+              {clients.map((c) => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
+          </label>
+        </div>
+        <div className="cd-meta-item">
           <span className="cd-meta-k">Formato</span>
           <label className="cd-chip select-chip">
             <select value={creative.format} onChange={(e) => changeFormat(e.target.value)} aria-label="Formato">
@@ -174,124 +200,109 @@ function CreativeDetail({ creative }: { creative: Creative }) {
         </div>
       </div>
 
-      <div className="cd-grid">
-        <div className="cd-main">
-          <section className="cd-sec">
-            <h2 className="cd-sec-title">
-              <AlignLeft size={16} /> Descrição
-            </h2>
-            <BlockEditor
-              blocks={creative.briefing}
-              onChange={(briefing) => set({ briefing })}
-              emptyHint="Objetivo, público, mensagem, links… digite '/' para títulos e listas"
-              aiContext={creativeContext(creative) + ". Este texto é o briefing"}
-            />
-          </section>
+      <div className="cd-main">
+        <section className="cd-sec">
+          <h2 className="cd-sec-title">
+            <AlignLeft size={16} /> Descrição
+          </h2>
+          <BlockEditor
+            blocks={creative.briefing}
+            onChange={(briefing) => set({ briefing })}
+            emptyHint="Objetivo, público, mensagem, links… digite '/' para títulos e listas"
+            aiContext={creativeContext(creative) + ". Este texto é o briefing"}
+          />
+        </section>
 
-          <CardChecklist creative={creative} />
+        <CardChecklist creative={creative} />
 
-          <details className="cd-sec cd-fold" open={hasTexts || undefined}>
-            <summary className="cd-sec-title">
-              <Type size={16} /> Textos da peça
-              <ChevronDown size={15} className="cd-fold-ico" />
-            </summary>
-            <div className="stack" style={{ gap: 10, marginTop: 8 }}>
-              <div className="field">
-                <span className="row">
-                  <label htmlFor="creative-headline">Título / headline</label>
-                  <AiFieldButton label="Headline" value={creative.headline} onChange={(headline) => set({ headline })} context={creativeContext(creative)} />
-                </span>
-                <input id="creative-headline" className="input" value={creative.headline} placeholder="A frase principal da arte" onChange={(e) => set({ headline: e.target.value })} />
-              </div>
-              <div className="field">
-                <span className="row">
-                  <label htmlFor="creative-body">Texto de apoio</label>
-                  <AiFieldButton label="Texto de apoio" value={creative.bodyText} onChange={(bodyText) => set({ bodyText })} context={creativeContext(creative)} />
-                </span>
-                <textarea id="creative-body" className="textarea" rows={3} value={creative.bodyText} placeholder="Texto secundário, informações, legenda da arte" onChange={(e) => set({ bodyText: e.target.value })} />
-              </div>
-              <div className="field">
-                <span className="row">
-                  <label htmlFor="creative-cta">Chamada para ação</label>
-                  <AiFieldButton label="Chamada para ação" value={creative.cta} onChange={(cta) => set({ cta })} context={creativeContext(creative)} />
-                </span>
-                <input id="creative-cta" className="input" value={creative.cta} placeholder="Ex.: Me chama no direct" onChange={(e) => set({ cta: e.target.value })} />
-              </div>
-              {showSlides ? (
-                <Slides creative={creative} />
-              ) : (
-                <button className="btn ghost sm" style={{ alignSelf: "flex-start" }} onClick={() => set({ slides: [{ id: uid(), text: creative.headline }] })}>
-                  <Plus size={14} /> Dividir em slides / telas
-                </button>
-              )}
+        <details className="cd-sec cd-fold" open={hasTexts || undefined}>
+          <summary className="cd-sec-title">
+            <Type size={16} /> Textos da peça
+            <ChevronDown size={15} className="cd-fold-ico" />
+          </summary>
+          <div className="stack" style={{ gap: 10, marginTop: 8 }}>
+            <div className="field">
+              <span className="row">
+                <label htmlFor="creative-headline">Título / headline</label>
+                <AiFieldButton label="Headline" value={creative.headline} onChange={(headline) => set({ headline })} context={creativeContext(creative)} />
+              </span>
+              <input id="creative-headline" className="input" value={creative.headline} placeholder="A frase principal da arte" onChange={(e) => set({ headline: e.target.value })} />
             </div>
-          </details>
+            <div className="field">
+              <span className="row">
+                <label htmlFor="creative-body">Texto de apoio</label>
+                <AiFieldButton label="Texto de apoio" value={creative.bodyText} onChange={(bodyText) => set({ bodyText })} context={creativeContext(creative)} />
+              </span>
+              <textarea id="creative-body" className="textarea" rows={3} value={creative.bodyText} placeholder="Texto secundário, informações, legenda da arte" onChange={(e) => set({ bodyText: e.target.value })} />
+            </div>
+            <div className="field">
+              <span className="row">
+                <label htmlFor="creative-cta">Chamada para ação</label>
+                <AiFieldButton label="Chamada para ação" value={creative.cta} onChange={(cta) => set({ cta })} context={creativeContext(creative)} />
+              </span>
+              <input id="creative-cta" className="input" value={creative.cta} placeholder="Ex.: Me chama no direct" onChange={(e) => set({ cta: e.target.value })} />
+            </div>
+            {showSlides ? (
+              <Slides creative={creative} />
+            ) : (
+              <button className="btn ghost sm" style={{ alignSelf: "flex-start" }} onClick={() => set({ slides: [{ id: uid(), text: creative.headline }] })}>
+                <Plus size={14} /> Dividir em slides / telas
+              </button>
+            )}
+          </div>
+        </details>
 
-          <Moodboard creative={creative} />
-        </div>
+        <Moodboard creative={creative} />
 
-        <aside className="cd-side">
-          <section className="card cd-details">
-            <div className="card-title">Detalhes</div>
-            <dl className="cd-dl">
-              <dt>Etapa</dt>
-              <dd>
-                <select className="select bare" value={creative.stage} onChange={(e) => set({ stage: e.target.value as CreativeStage })} aria-label="Etapa">
-                  {CREATIVE_STAGES.map((s) => (
-                    <option key={s.value} value={s.value}>
-                      {s.label}
-                    </option>
-                  ))}
-                </select>
-              </dd>
-              <dt>Tamanho</dt>
-              <dd>
-                <input className="input bare num" placeholder="1080×1350" value={creative.size} onChange={(e) => set({ size: e.target.value })} aria-label="Tamanho" />
-              </dd>
-              <dt>Cliente</dt>
-              <dd>
-                <input className="input bare" list="creative-clients" placeholder="Perfil próprio" value={creative.client} onChange={(e) => set({ client: e.target.value })} aria-label="Cliente ou marca" />
-                <datalist id="creative-clients">
-                  {clients.map((c) => (
-                    <option key={c} value={c} />
-                  ))}
-                </datalist>
-              </dd>
-              <dt>Arquivo</dt>
-              <dd>
-                <input className="input bare" placeholder="Link do Figma, Canva…" value={creative.fileUrl} onChange={(e) => set({ fileUrl: e.target.value })} aria-label="Link do arquivo" />
-              </dd>
-              {note && (
-                <>
-                  <dt>Ideia</dt>
-                  <dd>
-                    <button className="link ellipsis" onClick={() => navigate(`/ideias/${note.id}`)}>
-                      {note.title || "Sem título"} ↗
+        <details className="cd-sec cd-fold" open={hasExtras || undefined}>
+          <summary className="cd-sec-title">
+            <Settings2 size={16} /> Produção e referências
+            <ChevronDown size={15} className="cd-fold-ico" />
+          </summary>
+          <div className="cd-extra">
+            <section>
+              <div className="cd-sec-title sub">Ficha</div>
+              <dl className="cd-dl">
+                <dt>Tamanho</dt>
+                <dd>
+                  <input className="input bare num" placeholder="1080×1350" value={creative.size} onChange={(e) => set({ size: e.target.value })} aria-label="Tamanho" />
+                </dd>
+                <dt>Arquivo</dt>
+                <dd>
+                  <input className="input bare" placeholder="Link do Figma, Canva…" value={creative.fileUrl} onChange={(e) => set({ fileUrl: e.target.value })} aria-label="Link do arquivo" />
+                </dd>
+                {note && (
+                  <>
+                    <dt>Ideia</dt>
+                    <dd>
+                      <button className="link ellipsis" onClick={() => navigate(`/ideias/${note.id}`)}>
+                        {note.title || "Sem título"} ↗
+                      </button>
+                    </dd>
+                  </>
+                )}
+              </dl>
+              <div className="cd-channels">
+                {CREATIVE_CHANNELS.map((ch) => {
+                  const on = creative.channels.includes(ch);
+                  return (
+                    <button
+                      key={ch}
+                      className={cx("cd-channel", on && "on")}
+                      aria-pressed={on}
+                      onClick={() => set({ channels: on ? creative.channels.filter((x) => x !== ch) : [...creative.channels, ch] })}
+                    >
+                      {ch}
                     </button>
-                  </dd>
-                </>
-              )}
-            </dl>
-            <div className="cd-channels">
-              {CREATIVE_CHANNELS.map((ch) => {
-                const on = creative.channels.includes(ch);
-                return (
-                  <button
-                    key={ch}
-                    className={cx("cd-channel", on && "on")}
-                    aria-pressed={on}
-                    onClick={() => set({ channels: on ? creative.channels.filter((x) => x !== ch) : [...creative.channels, ch] })}
-                  >
-                    {ch}
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-          <VisualIdentity creative={creative} />
-          <CreativeTasks creative={creative} />
-          <CreativeLinks creative={creative} />
-        </aside>
+                  );
+                })}
+              </div>
+            </section>
+            <VisualIdentity creative={creative} />
+            <CreativeTasks creative={creative} />
+            <CreativeLinks creative={creative} />
+          </div>
+        </details>
       </div>
     </div>
   );
@@ -658,8 +669,8 @@ function VisualIdentity({ creative }: { creative: Creative }) {
     patchCreative(creative.id, { palette: [...creative.palette, color.toUpperCase()] });
   };
   return (
-    <section className="card">
-      <div className="card-title">Visual</div>
+    <section>
+      <div className="cd-sec-title sub">Visual</div>
       <div className="stack" style={{ gap: 6 }}>
         <span className="muted" style={{ fontSize: 12.5 }}>
           Paleta {creative.palette.length > 0 && "· clique para copiar"}
@@ -722,8 +733,8 @@ function CreativeTasks({ creative }: { creative: Creative }) {
   };
 
   return (
-    <section className="card">
-      <div className="card-title">Produção {tasks.length > 0 && `${done}/${tasks.length}`}</div>
+    <section>
+      <div className="cd-sec-title sub">Tarefas {tasks.length > 0 && `${done}/${tasks.length}`}</div>
       {tasks.length === 0 && <div className="muted" style={{ fontSize: 13, marginBottom: 6 }}>Nenhuma tarefa ligada a este criativo.</div>}
       {tasks.map((t) => (
         <div key={t.id} className={cx("task-row", t.status === "done" && "done")} style={{ padding: "4px 4px" }} onClick={() => ui.openTask(t.id)}>
@@ -759,8 +770,8 @@ function CreativeLinks({ creative }: { creative: Creative }) {
     setUrl("");
   };
   return (
-    <section className="card">
-      <div className="card-title">Links de referência</div>
+    <section>
+      <div className="cd-sec-title sub">Links de referência</div>
       {creative.references.map((r) => (
         <div key={r.id} className="row" style={{ padding: "3px 0" }}>
           {r.url ? (
