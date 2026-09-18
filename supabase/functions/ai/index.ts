@@ -278,7 +278,7 @@ async function callGemini(key: string, messages: ChatMessage[], tools: ToolDef[]
         res = await fetchWithTimeout(
           `${GEMINI_API}/models/${candidate}:generateContent`,
           { method: "POST", headers: { "x-goog-api-key": key, "Content-Type": "application/json" }, body: noThinking },
-          ATTEMPT_TIMEOUT_MS,
+          withTools ? TOOLS_TIMEOUT_MS : ATTEMPT_TIMEOUT_MS,
         );
         body = await res.json().catch(() => ({}));
       } catch {
