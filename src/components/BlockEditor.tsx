@@ -514,7 +514,7 @@ export function BlockEditor({
             )}
             <span className="blk-field">
             <AutoTextarea
-              className={cx("blk-text", focusedId !== block.id && hasUrl(block.text) && "has-links")}
+              className={cx("blk-text", isEmpty && "hint", focusedId !== block.id && hasUrl(block.text) && "has-links")}
               value={block.text}
               placeholder={isEmpty ? emptyHint : PLACEHOLDER[block.type]}
               aria-label="Bloco de texto"

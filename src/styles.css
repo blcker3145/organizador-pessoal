@@ -330,6 +330,8 @@ button.pill { cursor: pointer; }
 }
 .blk-links a:hover { background: var(--accent-soft); text-decoration-thickness: 2px; }
 .blk-text::placeholder { color: transparent; }
+/* o editor vazio mostra a dica logo de cara, como a descrição do Trello */
+.blk-text.hint::placeholder { color: var(--text-3); }
 .blk-text:focus::placeholder { color: var(--text-3); }
 .blk.h1 :is(.blk-text, .blk-links) { font-size: 26px; font-weight: 700; line-height: 1.3; padding-top: 14px; }
 .blk.h2 :is(.blk-text, .blk-links) { font-size: 20px; font-weight: 650; line-height: 1.3; padding-top: 12px; }

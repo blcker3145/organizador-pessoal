@@ -208,7 +208,7 @@ function CreativeDetail({ creative }: { creative: Creative }) {
           <BlockEditor
             blocks={creative.briefing}
             onChange={(briefing) => set({ briefing })}
-            emptyHint="Objetivo, público, mensagem, links… digite '/' para títulos e listas"
+            emptyHint="Adicione uma descrição mais detalhada… digite / para títulos, listas e tarefas"
             aiContext={creativeContext(creative) + ". Este texto é o briefing"}
           />
         </section>

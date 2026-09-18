@@ -25,7 +25,20 @@ export function normalizeState(raw: unknown): AppState | null {
   if (!raw || typeof raw !== "object") return null;
   const parsed = raw as AppState;
   if (parsed.version !== STATE_VERSION || !Array.isArray(parsed.tasks)) return null;
-  return fixImportedLinks(normalizeBoardState({ ...emptyState(), ...parsed }));
+  return dropEmptyTemplate(fixImportedLinks(normalizeBoardState({ ...emptyState(), ...parsed })));
+}
+
+/**
+ * Briefings antigos vinham com os títulos "Objetivo, Público…" prontos.
+ * Quando esses títulos ficaram vazios, o texto volta a ser uma folha em branco.
+ */
+function dropEmptyTemplate(s: AppState): AppState {
+  const onlyTemplate = (blocks: Block[]) =>
+    blocks.length > 0 &&
+    blocks.every((b) => (b.type === "h2" ? BRIEFING_SECTIONS.includes(b.text.trim()) : !b.text.trim())) &&
+    blocks.some((b) => b.type === "h2");
+  if (!s.creatives.some((c) => onlyTemplate(c.briefing))) return s;
+  return { ...s, creatives: s.creatives.map((c) => (onlyTemplate(c.briefing) ? { ...c, briefing: [textBlock()] } : c)) };
 }
 
 /** Links importados do Trello vinham como [url](url "…"): deixa só o endereço. */
@@ -291,7 +304,7 @@ export function createCreative(partial: Partial<Creative> = {}): Creative {
     channels: ["Instagram"],
     client: "",
     dueDate: null,
-    briefing: templateBlocks(BRIEFING_SECTIONS),
+    briefing: [textBlock()],
     headline: "",
     bodyText: "",
     cta: "",
@@ -333,7 +346,7 @@ export function noteToCreative(noteId: string): Creative | null {
   const creative = createCreative({
     title,
     noteId: note.id,
-    ...(hasText ? { briefing: [...note.body.map((b) => ({ ...b, id: uid() })), ...templateBlocks(BRIEFING_SECTIONS)] } : {}),
+    ...(hasText ? { briefing: [...note.body.map((b) => ({ ...b, id: uid() })), textBlock()] } : {}),
   });
   patchNote(noteId, { converted: [...note.converted, { kind: "creative", id: creative.id }] });
   return creative;

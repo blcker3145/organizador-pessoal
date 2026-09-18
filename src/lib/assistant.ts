@@ -2,7 +2,7 @@
 import { chat, markdownToBlocks, type ChatMessage, type ToolDef } from "./ai";
 import { formatRange, hm, isAllDayLike, LOCAL_CALENDAR_ID, parseLocal, type UiEvent } from "./calendar";
 import { defaultCalendarId, eventsInRange, newDraft, saveDraft } from "./calendarActions";
-import { CREATIVE_FORMATS, BRIEFING_SECTIONS, creativeStageInfo } from "./creatives";
+import { CREATIVE_FORMATS, creativeStageInfo } from "./creatives";
 import { addDays, longDate, relativeDate, today, weekday, WEEKDAYS_LONG } from "./dates";
 import { monthSummary } from "./finance";
 import { gcalStore, refreshGcalStatus } from "./gcal";
@@ -91,7 +91,7 @@ export const ASSISTANT_TOOLS: ToolDef[] = [
           texto_apoio: { type: "string" },
           cta: { type: "string" },
           slides: { type: "array", items: { type: "string" }, description: "Texto de cada slide, para carrossel" },
-          briefing: { type: "string", description: "Briefing em markdown com seções ## Objetivo, ## Público, ## Mensagem principal, ## Estilo e referências, ## Observações" },
+          briefing: { type: "string", description: "Briefing em markdown, do jeito que fizer sentido para a peça (texto corrido, listas ou títulos). Sem modelo fixo." },
         },
         required: ["titulo"],
       },
@@ -331,7 +331,7 @@ export async function runTool(name: string, rawArgs: string): Promise<{ result: 
         bodyText: str(a.texto_apoio),
         cta: str(a.cta),
         slides: slides.map((text) => ({ id: uid(), text })),
-        briefing: str(a.briefing) ? markdownToBlocks(str(a.briefing)) : templateBlocks(BRIEFING_SECTIONS),
+        briefing: str(a.briefing) ? markdownToBlocks(str(a.briefing)) : undefined,
       });
       return { result: `Criativo criado: "${c.title}" (${c.format}).`, item: { kind: "creative", id: c.id, label: c.title, path: `/criativos/${c.id}` } };
     }
