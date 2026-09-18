@@ -176,6 +176,13 @@
 .pomo-mini-text small { font-size: 11px; opacity: 0.6; }
 .pomo-mini-btn { width: 34px; height: 34px; border-radius: 50%; border: 0; background: #fff; color: #000; display: grid; place-items: center; cursor: pointer; }
 .pomo-mini-btn:active { transform: scale(0.92); }
+/* os controles extras aparecem ao passar o mouse (ou ao navegar pelo teclado) */
+.pomo-mini-extra {
+  display: flex; align-items: center; gap: 2px; max-width: 0; opacity: 0; overflow: hidden;
+  transition: max-width 320ms var(--ease-ios, ease), opacity 200ms ease;
+}
+.pomo-mini:hover .pomo-mini-extra, .pomo-mini:focus-within .pomo-mini-extra { max-width: 160px; opacity: 1; }
+@media (hover: none) { .pomo-mini-extra { max-width: 160px; opacity: 1; } }
 .pomo-mini-vol { position: relative; }
 .pomo-mini-ghost { width: 34px; height: 34px; border-radius: 50%; border: 0; background: none; color: inherit; display: grid; place-items: center; cursor: pointer; opacity: 0.8; transition: background-color 150ms ease, opacity 150ms ease; }
 .pomo-mini-ghost:hover, .pomo-mini-ghost.on { background: rgba(255, 255, 255, 0.14); opacity: 1; }

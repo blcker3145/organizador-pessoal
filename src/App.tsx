@@ -13,6 +13,7 @@ import { CalendarPage } from "./pages/Calendar";
 import { PomodoroPage } from "./pages/Pomodoro";
 import { AlertsPanel } from "./components/Alerts";
 import { checkDesktopAlerts } from "./lib/alerts";
+import { resumeTimer } from "./lib/pomodoro";
 import { PomodoroMini } from "./components/PomodoroMini";
 import { PomodoroPlayer } from "./components/PomodoroPlayer";
 import { CreativePage } from "./pages/CreativePage";
@@ -143,6 +144,8 @@ function Workspace() {
     document.querySelector(".main")?.scrollTo(0, 0);
     ui.closeTask();
   }, [path]);
+  // o cronômetro volta de onde parou, agora que as preferências já chegaram
+  useEffect(() => resumeTimer(), []);
   // avisos de prazo no computador, de minuto em minuto
   useEffect(() => {
     checkDesktopAlerts();

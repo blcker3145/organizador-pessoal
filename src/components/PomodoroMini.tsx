@@ -1,8 +1,9 @@
-import { Pause, Play, Volume1, Volume2, VolumeX } from "lucide-react";
+import { Maximize2, Pause, PictureInPicture2, Play, RotateCcw, SkipForward, Volume1, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { formatClock, MODE_LABEL, setVolume, timeLeft, toggle, useNow, useTimer } from "../lib/pomodoro";
+import { openPipTimer } from "../lib/pipTimer";
+import { formatClock, MODE_LABEL, reset, setVolume, skip, timeLeft, toggle, useNow, useTimer } from "../lib/pomodoro";
 import { useApp } from "../lib/store";
-import { navigate, useRoute } from "../lib/ui";
+import { navigate, ui, useRoute } from "../lib/ui";
 import { cx } from "../lib/util";
 import { NeuronLogo } from "./Logo";
 
@@ -26,6 +27,29 @@ export function PomodoroMini() {
           <small>{t.status === "paused" ? "Pausado" : MODE_LABEL[t.mode]}</small>
         </span>
       </button>
+      {/* ao passar o mouse, a pílula cresce e mostra o resto dos controles */}
+      <div className="pomo-mini-extra">
+        <button className="pomo-mini-ghost" onClick={reset} aria-label="Reiniciar etapa" title="Reiniciar">
+          <RotateCcw size={15} />
+        </button>
+        <button className="pomo-mini-ghost" onClick={skip} aria-label="Pular etapa" title="Pular etapa">
+          <SkipForward size={15} />
+        </button>
+        <button
+          className="pomo-mini-ghost"
+          onClick={async () => {
+            const ok = await openPipTimer(() => navigate("/pomodoro"));
+            if (!ok) ui.toast("A janela flutuante funciona no Chrome e no Edge do computador.");
+          }}
+          aria-label="Abrir em janela flutuante"
+          title="Janela flutuante, por cima de tudo"
+        >
+          <PictureInPicture2 size={15} />
+        </button>
+        <button className="pomo-mini-ghost" onClick={() => navigate("/pomodoro")} aria-label="Abrir o Pomodoro" title="Abrir a página do Pomodoro">
+          <Maximize2 size={15} />
+        </button>
+      </div>
       <MiniVolume />
       <button className="pomo-mini-btn" onClick={toggle} aria-label={running ? "Pausar" : "Continuar"}>
         {running ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" />}

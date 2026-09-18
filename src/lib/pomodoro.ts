@@ -31,7 +31,9 @@ const minutesOf = (mode: PomodoroMode) => {
   return mode === "focus" ? p.focus : mode === "short" ? p.short : p.long;
 };
 
-export const timerStore = createStore<TimerState>({
+const STORAGE = "organizador.pomodoro";
+
+const DEFAULT_TIMER: TimerState = {
   mode: "focus",
   status: "idle",
   endAt: 0,
@@ -40,9 +42,32 @@ export const timerStore = createStore<TimerState>({
   cycle: 0,
   taskId: null,
   immersive: false,
-});
+};
+
+/** O cronômetro fica guardado no navegador, então recarregar a página não zera nada. */
+function savedTimer(): TimerState | null {
+  try {
+    const raw = localStorage.getItem(STORAGE);
+    if (!raw) return null;
+    const s = { ...DEFAULT_TIMER, ...(JSON.parse(raw) as Partial<TimerState>) };
+    const ok = ["idle", "running", "paused"].includes(s.status) && ["focus", "short", "long"].includes(s.mode) && s.duration > 0;
+    return ok ? s : null;
+  } catch {
+    return null;
+  }
+}
+
+export const timerStore = createStore<TimerState>(savedTimer() || DEFAULT_TIMER);
 export const useTimer = timerStore.use;
 const set = (p: Partial<TimerState>) => timerStore.set((s) => ({ ...s, ...p }));
+
+timerStore.subscribe(() => {
+  try {
+    localStorage.setItem(STORAGE, JSON.stringify(timerStore.get()));
+  } catch {
+    /* navegador sem espaço ou em aba privada */
+  }
+});
 
 export const timeLeft = (s: TimerState, now = Date.now()) => (s.status === "running" ? Math.max(0, s.endAt - now) : s.remaining);
 
@@ -170,6 +195,38 @@ function complete() {
   }
   notify(s.mode === "focus" ? "Foco concluído" : "Pausa terminada", s.mode === "focus" ? "Hora de uma pausa." : "Bora voltar ao foco.");
   advance(cycle, prefs().autoStart);
+}
+
+/**
+ * Ao abrir (ou recarregar) a página: volta o cronômetro de onde parou.
+ * Se a etapa terminou enquanto o app estava fechado, ela é registrada e o ciclo segue.
+ */
+let resumed = false;
+
+export function resumeTimer() {
+  if (resumed) return;
+  resumed = true;
+  const s = timerStore.get();
+  if (s.status !== "running") {
+    if (s.status === "idle") syncIdleDuration();
+    return;
+  }
+  if (s.endAt > Date.now()) {
+    ensureTicker();
+    if (s.mode === "focus") startAmbient(prefs().sound, prefs().volume);
+    return;
+  }
+  // terminou fora do ar: registra o foco e vai para a próxima etapa, parada
+  let cycle = s.cycle;
+  if (s.mode === "focus") {
+    cycle += 1;
+    const minutes = Math.round(s.duration / 60_000);
+    setState((st) => ({
+      ...st,
+      pomodoroLog: [...st.pomodoroLog, { id: uid(), date: today(), endedAt: s.endAt, minutes, taskId: s.taskId }].slice(-2000),
+    }));
+  }
+  advance(cycle, false);
 }
 
 /* ---------- avisos ---------- */

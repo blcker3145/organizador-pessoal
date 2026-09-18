@@ -1,9 +1,10 @@
-import { Bell, Link2, Maximize2, Minimize2, Pause, Play, RotateCcw, SkipForward, Volume2, VolumeX } from "lucide-react";
+import { Bell, Link2, Maximize2, Minimize2, Pause, PictureInPicture2, Play, RotateCcw, SkipForward, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { LavaCanvas } from "../components/LavaCanvas";
 import { NeuronLogo } from "../components/Logo";
 import { Checkbox } from "../components/common";
 import { PLAYER_SLOT } from "../components/PomodoroPlayer";
+import { openPipTimer, pipSupported } from "../lib/pipTimer";
 import { AMBIENTS, ambientPlaying, embedUrl, isEmbedSound, startAmbient, stopAmbient } from "../lib/ambient";
 import { today } from "../lib/dates";
 import {
@@ -23,6 +24,7 @@ import {
   useTimer,
 } from "../lib/pomodoro";
 import { setState, useApp } from "../lib/store";
+import { ui } from "../lib/ui";
 import type { PomodoroMode, PomodoroPrefs } from "../lib/types";
 import { cx } from "../lib/util";
 
@@ -95,6 +97,18 @@ function Stage() {
           ))}
         </span>
         <span className="grow" />
+        {pipSupported() && (
+          <button
+            className="glass-btn sm"
+            onClick={async () => {
+              if (!(await openPipTimer())) ui.toast("A janela flutuante funciona no Chrome e no Edge do computador.");
+            }}
+            aria-label="Abrir em janela flutuante"
+            title="Janela flutuante, por cima dos outros programas"
+          >
+            <PictureInPicture2 size={16} />
+          </button>
+        )}
         <button className="glass-btn sm" onClick={() => setImmersive(!t.immersive)} aria-label={t.immersive ? "Sair da tela cheia" : "Tela cheia"} title={t.immersive ? "Sair (Esc)" : "Tela cheia"}>
           {t.immersive ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
         </button>
