@@ -97,8 +97,9 @@ function CreativeDetail({ creative }: { creative: Creative }) {
   return (
     <div className="page cd-page">
       <div className="cd-top">
-        <button className="btn ghost sm" onClick={() => navigate("/criativos")}>
-          <ArrowLeft size={14} /> Criativos
+        <button className="back-btn" onClick={() => navigate("/criativos")} aria-label="Voltar para Criativos">
+          <ArrowLeft size={18} />
+          <span>Criativos</span>
         </button>
         <span className="grow" />
         <CoverButton creative={creative} />

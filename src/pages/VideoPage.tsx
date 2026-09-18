@@ -80,8 +80,9 @@ function VideoDetail({ video }: { video: Video }) {
   return (
     <div className="page wide" style={{ maxWidth: 1180 }}>
       <div className="row wrap" style={{ marginBottom: 18, gap: 6 }}>
-        <button className="btn ghost sm" onClick={() => navigate("/videos")}>
-          <ArrowLeft size={14} /> Vídeos
+        <button className="back-btn" onClick={() => navigate("/videos")} aria-label="Voltar para Vídeos">
+          <ArrowLeft size={18} />
+          <span>Vídeos</span>
         </button>
         <span className="grow" />
         <button className="btn sm" onClick={() => setReading(!reading)}>

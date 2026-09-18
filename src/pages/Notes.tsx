@@ -133,8 +133,9 @@ function NoteEditor({ note }: { note: Note }) {
   return (
     <div className="page" style={{ maxWidth: 820 }}>
       <div className="row wrap" style={{ marginBottom: 20, gap: 6 }}>
-        <button className="btn ghost sm mobile-back" onClick={() => navigate("/ideias")} aria-label="Voltar para a lista">
-          <ArrowLeft size={14} />
+        <button className="back-btn" onClick={() => navigate("/ideias")} aria-label="Voltar para Ideias e Notas">
+          <ArrowLeft size={18} />
+          <span>Ideias</span>
         </button>
         <span className="muted" style={{ fontSize: 13 }}>
           Ideias &amp; Notas / {KIND_LABEL[note.kind]}

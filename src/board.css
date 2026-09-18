@@ -251,7 +251,7 @@
 
 /* ---------- página do criativo (simples, estilo cartão do Trello) ---------- */
 .cd-page { max-width: 960px; }
-.cd-top { display: flex; align-items: center; gap: 2px; margin-bottom: 14px; }
+.cd-top { display: flex; align-items: center; gap: 4px; margin-bottom: 18px; }
 .cd-top .btn.sm { gap: 4px; }
 .icon-btn.on-accent { color: var(--accent); }
 .cd-title { margin-bottom: 14px; }
