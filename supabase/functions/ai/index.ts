@@ -120,6 +120,8 @@ const GEMINI_FAST = ["gemini-flash-lite-latest", "gemini-2.5-flash-lite", "gemin
 const GEMINI_PREFERRED = ["gemini-flash-latest", "gemini-2.5-flash", "gemini-2.0-flash"];
 /** Tempo máximo esperando um modelo antes de tentar o próximo. */
 const ATTEMPT_TIMEOUT_MS = 12_000;
+/** Com ferramentas o modelo pensa mais, então vale esperar um pouco a mais. */
+const TOOLS_TIMEOUT_MS = 25_000;
 
 async function fetchWithTimeout(url: string, init: RequestInit, ms: number) {
   const ctrl = new AbortController();
@@ -249,7 +251,7 @@ async function callGemini(key: string, messages: ChatMessage[], tools: ToolDef[]
   const attempts = [primary, ...rest.filter((m) => m !== primary)].slice(0, 3);
   // escrever texto não precisa de raciocínio: desligar isso corta boa parte da espera
   const request = toGeminiRequest(messages, tools) as Json;
-  request.generationConfig = withTools ? { maxOutputTokens: 4096 } : { maxOutputTokens: 2048, thinkingConfig: { thinkingBudget: 0 } };
+  request.generationConfig = { maxOutputTokens: withTools ? 4096 : 2048, thinkingConfig: { thinkingBudget: 0 } };
   const payload = JSON.stringify(request);
   const noThinking = JSON.stringify({ ...request, generationConfig: { maxOutputTokens: withTools ? 4096 : 2048 } });
 
@@ -264,14 +266,14 @@ async function callGemini(key: string, messages: ChatMessage[], tools: ToolDef[]
       res = await fetchWithTimeout(
         `${GEMINI_API}/models/${candidate}:generateContent`,
         { method: "POST", headers: { "x-goog-api-key": key, "Content-Type": "application/json" }, body: payload },
-        ATTEMPT_TIMEOUT_MS,
+        withTools ? TOOLS_TIMEOUT_MS : ATTEMPT_TIMEOUT_MS,
       );
     } catch {
       continue; // demorou demais: vai para o próximo modelo
     }
     let body = await res.json().catch(() => ({}));
     // alguns modelos recusam o pedido para desligar o raciocínio: repete sem essa parte
-    if (!res.ok && res.status === 400 && !withTools) {
+    if (!res.ok && res.status === 400) {
       try {
         res = await fetchWithTimeout(
           `${GEMINI_API}/models/${candidate}:generateContent`,
