@@ -242,9 +242,10 @@ function toGeminiRequest(messages: ChatMessage[], tools: ToolDef[] | undefined) 
 
 async function callGemini(key: string, messages: ChatMessage[], tools: ToolDef[] | undefined): Promise<AiReply> {
   const withTools = !!tools?.length;
-  const primary = withTools ? await pickGeminiModel(key) : GEMINI_FAST[0];
-  // no caminho rápido nem consultamos a lista de modelos: já vai direto no pedido
-  const rest = withTools ? geminiFallbacks : [...GEMINI_FAST.slice(1), ...GEMINI_PREFERRED];
+  // o modelo leve responde em segundos e também sabe usar ferramentas;
+  // os "flash" ficam de reserva, porque às vezes demoram demais
+  const primary = GEMINI_FAST[0];
+  const rest = withTools ? [...GEMINI_PREFERRED, ...GEMINI_FAST.slice(1)] : [...GEMINI_FAST.slice(1), ...GEMINI_PREFERRED];
   const attempts = [primary, ...rest.filter((m) => m !== primary)].slice(0, 3);
   // escrever texto não precisa de raciocínio: desligar isso corta boa parte da espera
   const request = toGeminiRequest(messages, tools) as Json;
