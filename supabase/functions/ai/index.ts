@@ -116,7 +116,7 @@ async function callOpenAi(key: string, messages: ChatMessage[], tools: ToolDef[]
 
 const GEMINI_API = "https://generativelanguage.googleapis.com/v1beta";
 // Escrita comum vai no modelo mais rápido; quando há ferramentas (assistente), começa no flash completo.
-const GEMINI_FAST = ["gemini-2.5-flash-lite", "gemini-flash-lite-latest", "gemini-2.0-flash-lite"];
+const GEMINI_FAST = ["gemini-flash-lite-latest", "gemini-2.5-flash-lite", "gemini-2.0-flash-lite"];
 const GEMINI_PREFERRED = ["gemini-flash-latest", "gemini-2.5-flash", "gemini-2.0-flash"];
 /** Tempo máximo esperando um modelo antes de tentar o próximo. */
 const ATTEMPT_TIMEOUT_MS = 12_000;
