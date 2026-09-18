@@ -17,6 +17,7 @@ import { PomodoroMini } from "./components/PomodoroMini";
 import { PomodoroPlayer } from "./components/PomodoroPlayer";
 import { CreativePage } from "./pages/CreativePage";
 import { CreativesPage } from "./pages/Creatives";
+import { SharedBoardPage } from "./pages/SharedBoard";
 import { FinancePage } from "./pages/Finance";
 import { HabitsPage } from "./pages/Habits";
 import { MorePage } from "./pages/More";
@@ -107,8 +108,18 @@ startAuth();
 
 export function App() {
   const { phase } = useSession();
+  const { parts } = useRoute();
   useTheme();
   let screen: React.ReactNode;
+  // o quadro compartilhado abre sem login: quem visita não entra na conta de ninguém
+  if (parts[0] === "compartilhado" && parts[1]) {
+    return (
+      <>
+        <SharedBoardPage token={parts[1]} />
+        <Toasts />
+      </>
+    );
+  }
   if (!supabaseConfigured) screen = <SetupMissingScreen />;
   else if (phase === "loading") screen = <LoadingScreen />;
   else if (phase === "signedOut") screen = <AuthScreen />;

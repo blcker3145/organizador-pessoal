@@ -129,6 +129,21 @@ Pronto: no app, **Agenda → Conectar Google Agenda**.
 - Enquanto o app estiver em **Teste** no Google Cloud, só os usuários de teste conseguem conectar, e o Google **expira a conexão a cada 7 dias**. O Organizador avisa e basta clicar em **Conectar** de novo.
 - Para liberar para qualquer pessoa sem expirar, publique o app na tela de consentimento. Como a agenda é um acesso "sensível", o Google pede verificação (política de privacidade, domínio, vídeo). Sem verificar, aparece o aviso "O Google não verificou este app" (dá para continuar em **Avançado**).
 
+## 9. Compartilhar o quadro de Criativos (opcional)
+
+Gera um link só de leitura do quadro para clientes e parceiros. Quem abre não entra em conta nenhuma, vê apenas os Criativos e não consegue editar. Se quiser, a pessoa pede permissão para comentar e você libera dentro do app.
+
+1. **SQL Editor → New query**, cole tudo de `supabase/migrations/0003_compartilhar.sql` e clique em **Run**.
+2. **Edge Functions → Deploy a new function → Via Editor**. Nome: `share` (exatamente assim).
+3. Apague o exemplo, cole tudo de `supabase/functions/share/index.ts` e clique em **Deploy function**.
+4. **Desligue** a opção **Verify JWT** dessa função: quem recebe o link não tem login.
+
+Pronto. No app, abra **Criativos → Compartilhar**, crie o link e mande para quem quiser.
+
+- Para tirar o acesso de todos, use **Desativar este link**.
+- Os comentários chegam no mesmo painel, com o nome de quem escreveu.
+- Nenhum outro módulo (tarefas, finanças, agenda, notas) sai no link.
+
 ## Problemas comuns
 
 | Mensagem | O que fazer |
@@ -147,3 +162,5 @@ Pronto: no app, **Agenda → Conectar Google Agenda**.
 | "Não foi possível salvar a conexão" | O SQL do passo 8.1 não foi aplicado |
 | Google mostra "Acesso bloqueado" / "app em teste" | Adicione o e-mail em usuários de teste (8.2.3) |
 | "A Google Calendar API não está ativada" | Refaça o passo 8.2.2 |
+| "Falta rodar o SQL do compartilhamento" | Refaça o passo 9.1 |
+| Link compartilhado diz "Não foi possível falar com o servidor" | Publique a função `share` (passo 9.2) com Verify JWT desligado |

@@ -1,8 +1,10 @@
-import { ImageIcon, Plus } from "lucide-react";
+import { ImageIcon, Plus, Share2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Empty, Tabs } from "../components/common";
 import { CreativeBoardView, LabelChip } from "../components/creatives/Board";
 import { BoardToolbar } from "../components/creatives/BoardTools";
+import { ShareDialog } from "../components/creatives/ShareDialog";
+import { countPendingRequests } from "../lib/share";
 import { MonthCalendar } from "../components/MonthCalendar";
 import { CREATIVE_CHANNELS, CREATIVE_FORMATS, creativeStageInfo } from "../lib/creatives";
 import { relativeDate, shortDate, today } from "../lib/dates";
@@ -75,6 +77,16 @@ export function CreativesPage() {
   const [channel, setChannel] = useKeptState("channel", "");
   const [labelFilter, setLabelFilter] = useKeptState<string[]>("labels", []);
   useScrollMemory(view);
+  const [sharing, setSharing] = useState(false);
+  const [pending, setPending] = useState(0);
+  // quantos pedidos de comentário esperam resposta
+  useEffect(() => {
+    let alive = true;
+    countPendingRequests().then((n) => alive && setPending(n));
+    return () => {
+      alive = false;
+    };
+  }, [sharing]);
 
   const clients = useMemo(() => [...new Set(state.creatives.map((c) => c.client).filter(Boolean))].sort(), [state.creatives]);
   const creatives = state.creatives.filter(
@@ -122,15 +134,21 @@ export function CreativesPage() {
 
   return (
     <div className="page wide crv-page">
+      {sharing && <ShareDialog onClose={() => setSharing(false)} />}
       <div className="crv-top">
         <div className="page-head">
           <div>
             <h1 className="page-title">Criativos</h1>
             <div className="page-sub">Planejamento de peças de design: briefing, textos, moodboard e entrega.</div>
           </div>
-          <button className="btn primary" onClick={() => newCreative()}>
-            <Plus size={15} /> Novo criativo
-          </button>
+          <div className="row" style={{ gap: 8 }}>
+            <button className={cx("btn", pending > 0 && "active")} onClick={() => setSharing(true)} title="Gerar um link só de leitura do quadro">
+              <Share2 size={15} /> Compartilhar {pending > 0 && <span className="alert-badge" style={{ position: "static", boxShadow: "none" }}>{pending}</span>}
+            </button>
+            <button className="btn primary" onClick={() => newCreative()}>
+              <Plus size={15} /> Novo criativo
+            </button>
+          </div>
         </div>
         <Tabs
           value={view}

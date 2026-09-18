@@ -6,6 +6,7 @@ import "./calendar.css";
 import "./board.css";
 import "./motion.css";
 import "./pomodoro.css";
+import "./share.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
