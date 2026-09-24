@@ -258,18 +258,10 @@ export function useNow(active: boolean) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     if (!active) return;
-    let raf = 0;
-    let last = 0;
-    const loop = (t: number) => {
-      // ~30 quadros por segundo bastam para o líquido
-      if (t - last > 33) {
-        last = t;
-        setNow(Date.now());
-      }
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
+    // o relógio mostra segundos: 4 atualizações por segundo bastam e poupam a interface
+    setNow(Date.now());
+    const id = window.setInterval(() => setNow(Date.now()), 250);
+    return () => window.clearInterval(id);
   }, [active]);
   return now;
 }

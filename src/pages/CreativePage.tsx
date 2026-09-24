@@ -687,7 +687,7 @@ function Moodboard({ creative }: { creative: Creative }) {
           <div className="mood-grid">
             {creative.moodboard.map((m) => (
               <figure key={m.id} className="mood-item">
-                <img src={m.src} alt={m.caption || "Referência"} onClick={() => setOpen(m)} />
+                <img src={m.src} alt={m.caption || "Referência"} loading="lazy" decoding="async" onClick={() => setOpen(m)} />
                 <button className="icon-btn mood-remove" aria-label="Remover imagem" onClick={() => patchCreative(creative.id, { moodboard: creative.moodboard.filter((x) => x.id !== m.id) })}>
                   <X size={14} />
                 </button>

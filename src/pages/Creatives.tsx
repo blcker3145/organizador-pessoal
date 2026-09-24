@@ -42,29 +42,39 @@ function useScrollMemory(view: string) {
   useEffect(() => {
     // cópia de antes de montar: o app zera a rolagem ao trocar de página logo depois
     const saved = new Map(memory);
+    const alvos = () => [document.querySelector(".main"), document.querySelector(".crv-body"), document.querySelector(".tboard"), ...document.querySelectorAll(".tcol-cards")];
     const restore = () => {
-      const els = [document.querySelector(".main"), document.querySelector(".crv-body"), document.querySelector(".tboard"), ...document.querySelectorAll(".tcol-cards")];
-      for (const el of els) {
+      let faltou = false;
+      for (const el of alvos()) {
         const k = el && scrollKey(el);
         const v = k && saved.get(`scroll:${view}:${k}`);
         if (!el || typeof v !== "number") continue;
         if (k === "board") el.scrollLeft = v;
         else el.scrollTop = v;
+        // a página ainda pode estar crescendo (imagens, listas): tenta de novo
+        if (Math.abs((k === "board" ? el.scrollLeft : el.scrollTop) - v) > 1) faltou = true;
       }
+      return faltou;
     };
-    let raf = requestAnimationFrame(() => {
-      restore();
-      raf = requestAnimationFrame(restore);
-    });
+    // tenta algumas vezes durante meio segundo, até a página atingir o tamanho final
+    const timers: number[] = [];
+    const tentar = () => {
+      if (restore()) return;
+      timers.forEach((t) => window.clearTimeout(t));
+    };
+    const raf = requestAnimationFrame(tentar);
+    [80, 200, 400, 700].forEach((ms) => timers.push(window.setTimeout(tentar, ms)));
+
     const onScroll = (e: Event) => {
       if (!(e.target instanceof Element)) return;
       const k = scrollKey(e.target);
       if (k) memory.set(`scroll:${view}:${k}`, k === "board" ? e.target.scrollLeft : e.target.scrollTop);
     };
-    document.addEventListener("scroll", onScroll, true);
+    document.addEventListener("scroll", onScroll, { capture: true, passive: true });
     return () => {
       cancelAnimationFrame(raf);
-      document.removeEventListener("scroll", onScroll, true);
+      timers.forEach((t) => window.clearTimeout(t));
+      document.removeEventListener("scroll", onScroll, { capture: true });
     };
   }, [view]);
 }
@@ -249,7 +259,7 @@ function Gallery({ creatives }: { creatives: Creative[] }) {
           <div key={c.id} className="gallery-card" onClick={() => navigate(`/criativos/${c.id}`)}>
             <div className="gallery-cover" style={c.palette[0] ? { background: c.palette[0] } : undefined}>
               {c.cover || c.moodboard[0] ? (
-                <img src={c.cover || c.moodboard[0].src} alt="" />
+                <img src={c.cover || c.moodboard[0].src} alt="" loading="lazy" decoding="async" />
               ) : c.headline ? (
                 <span style={{ color: c.palette[1] || undefined }}>{c.headline}</span>
               ) : (

@@ -631,3 +631,6 @@ button.pill { cursor: pointer; }
 @media (max-width: 800px) {
   .back-btn { height: 40px; padding: 0 18px 0 12px; }
 }
+
+/* listas longas: o navegador só desenha o que está na tela */
+.gallery-card, .mood-item { content-visibility: auto; contain-intrinsic-size: auto 240px; }

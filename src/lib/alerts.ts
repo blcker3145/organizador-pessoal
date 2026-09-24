@@ -5,6 +5,7 @@
 import { billPaid } from "./finance";
 import { addDays, daysInMonth, diffDays, monthKey, relativeDate, today } from "./dates";
 import { expandLocal } from "./calendar";
+import { useMemo } from "react";
 import { setState, appStore } from "./store";
 import type { AlertSettings, AppState, ISODate } from "./types";
 import { useApp } from "./store";
@@ -118,7 +119,8 @@ export function buildAlerts(state: AppState, now = new Date()): Alert[] {
 
 export function useAlerts() {
   const state = useApp();
-  const list = buildAlerts(state);
+  // só recalcula quando os dados mudam, não a cada desenho da tela
+  const list = useMemo(() => buildAlerts(state), [state]);
   const read = new Set(state.alerts.read);
   return { list, unread: list.filter((a) => !read.has(a.id)).length, isRead: (a: Alert) => read.has(a.id) };
 }

@@ -18,10 +18,10 @@ export function PomodoroPlayer() {
   const boxRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLIFrameElement>(null);
 
-  // acompanha o espaço reservado no palco (rolagem, tela cheia, redimensionamento)
+  // acompanha o espaço reservado no palco (rolagem, tela cheia, redimensionamento).
+  // Só recalcula quando algo muda de lugar: medir a cada quadro travava a rolagem.
   useEffect(() => {
     if (!embed) return;
-    let raf = 0;
     let last = "";
     const follow = () => {
       const box = boxRef.current;
@@ -58,10 +58,17 @@ export function PomodoroPlayer() {
           }
         }
       }
-      raf = requestAnimationFrame(follow);
     };
     follow();
-    return () => cancelAnimationFrame(raf);
+    const id = window.setInterval(follow, 300);
+    const onMove = () => follow();
+    window.addEventListener("scroll", onMove, { capture: true, passive: true });
+    window.addEventListener("resize", onMove);
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener("scroll", onMove, { capture: true });
+      window.removeEventListener("resize", onMove);
+    };
   }, [embed]);
 
   // volume e pausa chegam ao YouTube pela API do iframe

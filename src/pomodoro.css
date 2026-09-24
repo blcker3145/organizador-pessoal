@@ -160,8 +160,7 @@
 /* ---------- mini cronômetro ---------- */
 .pomo-mini {
   position: fixed; right: 20px; bottom: 20px; z-index: 45; display: flex; align-items: center; gap: 4px;
-  padding: 5px; border-radius: 999px; background: rgba(10, 10, 12, 0.82); color: #fff;
-  -webkit-backdrop-filter: blur(18px) saturate(160%); backdrop-filter: blur(18px) saturate(160%);
+  padding: 5px; border-radius: 999px; background: rgba(14, 14, 17, 0.94); color: #fff;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
   animation: toast-in 360ms var(--ease-spring, ease) backwards;
 }
@@ -188,8 +187,7 @@
 .pomo-mini-ghost:hover, .pomo-mini-ghost.on { background: rgba(255, 255, 255, 0.14); opacity: 1; }
 .pomo-mini-pop {
   position: absolute; right: -6px; bottom: calc(100% + 12px); display: flex; align-items: center; gap: 8px;
-  padding: 5px 14px 5px 5px; border-radius: 999px; background: rgba(10, 10, 12, 0.88); color: #fff;
-  -webkit-backdrop-filter: blur(18px) saturate(160%); backdrop-filter: blur(18px) saturate(160%);
+  padding: 5px 14px 5px 5px; border-radius: 999px; background: rgba(14, 14, 17, 0.96); color: #fff;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
   transform-origin: 85% 100%; animation: mini-pop 220ms var(--ease-spring, ease) backwards;
 }

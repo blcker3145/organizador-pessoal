@@ -110,7 +110,7 @@ function SharedCard({ c, data, onOpen }: { c: SharedCreative; data: Shared; onOp
   const hasText = c.briefing.some((b) => b.text.trim()) || !!c.bodyText.trim();
   return (
     <div className="tcard" role="button" tabIndex={0} onClick={onOpen} onKeyDown={(e) => e.key === "Enter" && onOpen()}>
-      {c.cover && <img className="tcard-cover" src={c.cover} alt="" loading="lazy" />}
+      {c.cover && <img className="tcard-cover" src={c.cover} alt="" loading="lazy" decoding="async" />}
       <div className="tcard-body">
         {labels.length > 0 && (
           <div className="tcard-labels">
@@ -253,7 +253,7 @@ function SharedCardView({
               <div className="sh-mood">
                 {c.moodboard.map((m) => (
                   <figure key={m.id}>
-                    <img src={m.src} alt={m.caption} onClick={() => setZoom(m.src)} />
+                    <img src={m.src} alt={m.caption} loading="lazy" decoding="async" onClick={() => setZoom(m.src)} />
                     {m.caption && <figcaption>{m.caption}</figcaption>}
                   </figure>
                 ))}

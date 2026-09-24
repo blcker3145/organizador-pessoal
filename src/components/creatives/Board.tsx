@@ -148,7 +148,7 @@ function Card({
         onClick={() => navigate(`/criativos/${c.id}`)}
         onKeyDown={(e) => e.key === "Enter" && navigate(`/criativos/${c.id}`)}
       >
-        {c.cover && !broken && <img className="tcard-cover" src={c.cover} alt="" loading="lazy" draggable={false} onError={() => setBroken(true)} />}
+        {c.cover && !broken && <img className="tcard-cover" src={c.cover} alt="" loading="lazy" decoding="async" draggable={false} onError={() => setBroken(true)} />}
         {c.cover && broken && (
           <div className="tcard-cover broken">
             <ImageIcon size={18} /> Capa indisponível
@@ -189,7 +189,7 @@ function ColumnCover({ col, onMenu }: { col: BoardColumn; onMenu: (r: DOMRect) =
   if (!col.cover) return null;
   return (
     <button className="tcover" onClick={(e) => onMenu(e.currentTarget.getBoundingClientRect())} title="Trocar capa da lista">
-      {!broken ? <img src={col.cover} alt="" onError={() => setBroken(true)} /> : <span className="tcover-fallback" />}
+      {!broken ? <img src={col.cover} alt="" loading="lazy" decoding="async" onError={() => setBroken(true)} /> : <span className="tcover-fallback" />}
       {(col.coverTitle || broken) && <span className="tcover-title">{col.title}</span>}
     </button>
   );
