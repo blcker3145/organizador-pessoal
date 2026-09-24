@@ -7,6 +7,7 @@ import "./board.css";
 import "./motion.css";
 import "./pomodoro.css";
 import "./share.css";
+import "./glass.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

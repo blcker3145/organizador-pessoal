@@ -1,0 +1,223 @@
+/*
+ * Visual "liquid glass": fundo com cor suave e superfícies de vidro fosco por cima,
+ * bordas bem arredondadas (até 28px) e um brilho fino no alto de cada painel.
+ *
+ * Desempenho: o desfoque de verdade (backdrop-filter) só entra em painéis que flutuam
+ * por cima do conteúdo (menus, janelas, barra do topo, navegação do celular).
+ * Cartões e listas usam vidro "pintado" (translúcido sobre o fundo já desfocado),
+ * que tem a mesma cara e não pesa na rolagem.
+ *
+ * Este arquivo vem por último, então vale sobre os outros estilos.
+ */
+
+:root {
+  --r-xs: 8px;
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 22px;
+  --r-xl: 28px;
+
+  --app-bg:
+    radial-gradient(60% 50% at 8% 0%, rgba(122, 162, 255, 0.28), transparent 70%),
+    radial-gradient(50% 45% at 100% 8%, rgba(255, 170, 214, 0.26), transparent 70%),
+    radial-gradient(55% 50% at 70% 100%, rgba(140, 232, 214, 0.26), transparent 70%),
+    radial-gradient(45% 40% at 0% 100%, rgba(255, 214, 150, 0.22), transparent 70%),
+    #eef0f5;
+
+  --glass: rgba(255, 255, 255, 0.58);
+  --glass-strong: rgba(255, 255, 255, 0.8);
+  --glass-soft: rgba(255, 255, 255, 0.38);
+  --glass-edge: rgba(20, 24, 40, 0.08);
+  --glass-hi: rgba(255, 255, 255, 0.9);
+  --glass-shadow: inset 0 1px 0 var(--glass-hi), 0 0 0 1px var(--glass-edge), 0 10px 30px -12px rgba(20, 24, 40, 0.22);
+  --glass-shadow-lg: inset 0 1px 0 var(--glass-hi), 0 0 0 1px var(--glass-edge), 0 24px 60px -18px rgba(20, 24, 40, 0.35);
+  --glass-blur: saturate(180%) blur(24px);
+
+  --bg-hover: rgba(40, 44, 60, 0.06);
+  --bg-active: rgba(40, 44, 60, 0.1);
+}
+
+:root[data-theme="dark"] {
+  --app-bg:
+    radial-gradient(60% 50% at 8% 0%, rgba(80, 110, 255, 0.22), transparent 70%),
+    radial-gradient(50% 45% at 100% 8%, rgba(190, 80, 200, 0.18), transparent 70%),
+    radial-gradient(55% 50% at 70% 100%, rgba(40, 180, 170, 0.16), transparent 70%),
+    radial-gradient(45% 40% at 0% 100%, rgba(255, 150, 80, 0.1), transparent 70%),
+    #0c0d11;
+
+  --glass: rgba(34, 36, 44, 0.55);
+  --glass-strong: rgba(30, 32, 40, 0.8);
+  --glass-soft: rgba(255, 255, 255, 0.05);
+  --glass-edge: rgba(255, 255, 255, 0.09);
+  --glass-hi: rgba(255, 255, 255, 0.1);
+  --glass-shadow: inset 0 1px 0 var(--glass-hi), 0 0 0 1px var(--glass-edge), 0 12px 36px -14px rgba(0, 0, 0, 0.7);
+  --glass-shadow-lg: inset 0 1px 0 var(--glass-hi), 0 0 0 1px var(--glass-edge), 0 28px 70px -20px rgba(0, 0, 0, 0.8);
+
+  --bg-hover: rgba(255, 255, 255, 0.07);
+  --bg-active: rgba(255, 255, 255, 0.12);
+}
+
+/* ---------- fundo do app ---------- */
+body { background: var(--app-bg); background-attachment: fixed; }
+.app, .main { background: transparent; }
+
+/* barra lateral: painel de vidro que flutua com cantos grandes */
+.sidebar {
+  margin: 10px 0 10px 10px; border: 0; border-radius: var(--r-xl);
+  background: var(--glass); box-shadow: var(--glass-shadow);
+  padding: 12px 8px;
+}
+.side-item { border-radius: var(--r-sm); }
+.side-item.active { background: var(--glass-strong); box-shadow: inset 0 1px 0 var(--glass-hi), 0 0 0 1px var(--glass-edge), 0 2px 8px -2px rgba(20, 24, 40, 0.14); }
+.brand-logo { border-radius: 9px; }
+
+/* ---------- controles ---------- */
+.btn { border-radius: var(--r-sm); height: 34px; padding: 0 14px; border-color: var(--glass-edge); background: var(--glass-strong); box-shadow: inset 0 1px 0 var(--glass-hi), 0 1px 3px rgba(20, 24, 40, 0.06); }
+.btn:hover { background: var(--glass-strong); filter: brightness(1.03); border-color: var(--line-strong); }
+.btn.sm { height: 28px; padding: 0 10px; border-radius: 10px; }
+.btn.ghost { background: transparent; box-shadow: none; border-color: transparent; }
+.btn.ghost:hover { background: var(--bg-hover); filter: none; }
+.btn.primary {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 88%, #fff) 0%, var(--accent) 100%);
+  border-color: transparent; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 16px -6px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+.icon-btn { border-radius: 10px; }
+
+.input, .select, .textarea { border-radius: var(--r-sm); border-color: var(--glass-edge); background: var(--glass-soft); box-shadow: inset 0 1px 2px rgba(20, 24, 40, 0.04); }
+.textarea { border-radius: var(--r-md); }
+.input:focus, .select:focus, .textarea:focus { background: var(--glass-strong); }
+.input.bare, .select.bare { background: transparent; box-shadow: none; }
+.input.bare:focus, .select.bare:focus { background: var(--glass-strong); }
+
+.chip-toggle { background: var(--glass-soft); border-color: var(--glass-edge); }
+.pill { border-radius: 999px; padding: 0 9px; }
+.tlabel { border-radius: 8px; }
+
+/* abas: controle segmentado de vidro */
+.tabs {
+  width: fit-content; max-width: 100%; gap: 2px; padding: 4px; border-radius: 999px;
+  background: var(--glass-soft); box-shadow: inset 0 0 0 1px var(--glass-edge);
+}
+.tab { border: 0; border-radius: 999px; padding: 6px 14px; }
+.tab::after { display: none; }
+.tab.on { background: var(--glass-strong); box-shadow: inset 0 1px 0 var(--glass-hi), 0 0 0 1px var(--glass-edge), 0 2px 8px -2px rgba(20, 24, 40, 0.18); }
+
+/* ---------- superfícies ---------- */
+.card, .gallery-card, .auth-card, .imp-board, .cal-connect, .fb-item, .ai-option, .ai-result, .assistant-suggestion, .created-chip, .auth-option {
+  background: var(--glass); border-color: var(--glass-edge); box-shadow: var(--glass-shadow);
+}
+.card { border-radius: var(--r-lg); padding: 16px 18px; }
+.gallery-card { border-radius: var(--r-lg); }
+.auth-card { border-radius: var(--r-xl); }
+.imp-board, .cal-connect, .fb-item, .ai-option, .ai-result, .assistant-suggestion, .auth-option { border-radius: var(--r-md); }
+.created-chip { border-radius: var(--r-sm); }
+.board-col { border-radius: var(--r-lg); background: var(--glass-soft); }
+.board-card { border-radius: var(--r-md); }
+.cp-cover { border-radius: var(--r-lg); }
+.mood-item img { border-radius: var(--r-md); }
+.drop-zone { border-radius: var(--r-lg); }
+.capture-bar { border-radius: var(--r-md); background: var(--glass); border-color: var(--glass-edge); box-shadow: var(--glass-shadow); }
+.back-btn { background: var(--glass-strong); border-color: var(--glass-edge); box-shadow: inset 0 1px 0 var(--glass-hi), 0 2px 8px -3px rgba(20, 24, 40, 0.16); }
+.cd-meta { border-bottom-color: var(--glass-edge); }
+.cd-chip, .select-chip { border-radius: var(--r-sm); }
+
+/* ---------- painéis que flutuam: vidro com desfoque de verdade ---------- */
+.modal, .pop, .menu, .drawer, .ed-pop, .ee-palette, .alert-panel, .palette {
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow-lg); border: 0;
+}
+.modal { border-radius: var(--r-xl); }
+.modal-head { padding: 18px 20px 8px; }
+.modal-body { padding: 10px 20px 20px; }
+.modal-foot { padding: 12px 20px 16px; border-top-color: var(--glass-edge); }
+.pop, .menu, .ed-pop, .ee-palette { border-radius: var(--r-lg); }
+.pop-item, .palette-item { border-radius: var(--r-sm); }
+.alert-panel { border-radius: var(--r-xl); }
+.alert-head, .alert-foot { border-color: var(--glass-edge); }
+.alert-row { border-radius: var(--r-md); }
+.ee-modal .modal-foot, .drawer-top { background: transparent; }
+.overlay { background: rgba(12, 14, 22, 0.28); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+
+/* gavetas (tarefa e assistente) flutuam soltas da borda */
+@media (min-width: 801px) {
+  .drawer { top: 10px; right: 10px; bottom: 10px; border-radius: var(--r-xl); }
+}
+
+/* avisos rápidos */
+.toast {
+  border-radius: var(--r-md); background: rgba(24, 26, 32, 0.82); color: #fff;
+  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 12px 32px -10px rgba(0, 0, 0, 0.5);
+}
+
+/* botão de feedback e pílula do Pomodoro: pequenos, podem ter desfoque */
+.fb-btn {
+  background: var(--glass-strong); border-color: var(--glass-edge);
+  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+  box-shadow: inset 0 1px 0 var(--glass-hi), 0 6px 18px -8px rgba(20, 24, 40, 0.3);
+}
+.pomo-mini, .pomo-mini-pop {
+  background: rgba(18, 18, 22, 0.72);
+  -webkit-backdrop-filter: saturate(170%) blur(18px); backdrop-filter: saturate(170%) blur(18px);
+}
+
+/* topo fixo dos Criativos: o conteúdo passa por baixo, então desfoca */
+.crv-top {
+  background: color-mix(in srgb, var(--glass-strong) 70%, transparent);
+  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+  margin: 0 -14px; padding: 0 14px; border-radius: 0 0 var(--r-lg) var(--r-lg);
+}
+
+/* navegação do celular */
+@media (max-width: 800px) {
+  .mobile-nav {
+    left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); padding: 6px 4px 8px;
+    border: 0; border-radius: var(--r-xl); background: var(--glass-strong);
+    -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+    box-shadow: var(--glass-shadow-lg);
+  }
+  .sidebar { margin: 0; border-radius: 0; }
+  /* a barra de baixo agora flutua: o que fica acima dela sobe um pouco */
+  .fb-btn { bottom: calc(92px + env(safe-area-inset-bottom)); }
+  .pomo-mini { bottom: calc(90px + env(safe-area-inset-bottom)); }
+}
+
+/* ---------- quadro de criativos ---------- */
+:root {
+  --tcol-bg: rgba(255, 255, 255, 0.5);
+  --tcard-bg: rgba(255, 255, 255, 0.86);
+  --tcard-hover: rgba(255, 255, 255, 0.98);
+  --tcard-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 1px rgba(20, 24, 40, 0.07), 0 3px 10px -4px rgba(20, 24, 40, 0.18);
+}
+:root[data-theme="dark"] {
+  --tcol-bg: rgba(22, 24, 30, 0.58);
+  --tcard-bg: rgba(48, 52, 62, 0.72);
+  --tcard-hover: rgba(58, 62, 74, 0.82);
+  --tcard-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.06), 0 4px 12px -4px rgba(0, 0, 0, 0.6);
+}
+.tboard { border-radius: var(--r-xl); }
+.tcol { border-radius: var(--r-lg); box-shadow: inset 0 1px 0 var(--glass-hi), 0 0 0 1px var(--glass-edge); }
+/* com imagem de fundo no quadro, as listas desfocam o que está atrás (poucas e grandes) */
+.tboard.has-bg .tcol { -webkit-backdrop-filter: saturate(160%) blur(18px); backdrop-filter: saturate(160%) blur(18px); }
+.tcard { border-radius: var(--r-md); }
+.tcover { border-radius: var(--r-md); }
+.tcomposer-input { border-radius: var(--r-sm); }
+
+/* ---------- agenda ---------- */
+.cal-side { background: transparent; border-right-color: var(--glass-edge); }
+.cal-create { border-radius: var(--r-md); }
+
+/* ---------- Pomodoro: o palco já tem seu próprio vidro ---------- */
+.pomo-stage { border-radius: var(--r-xl); }
+.sound-card { border-radius: var(--r-lg); background: var(--glass); border-color: var(--glass-edge); box-shadow: var(--glass-shadow); }
+
+/* quadro compartilhado segue o mesmo visual */
+.sh-page { background: var(--app-bg); background-attachment: fixed; }
+.sh-top { background: color-mix(in srgb, var(--glass-strong) 80%, transparent); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); }
+.sh-card { border-radius: var(--r-xl); background: var(--glass-strong); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: var(--glass-shadow-lg); }
+
+@media (prefers-reduced-transparency: reduce) {
+  :root { --glass: rgba(255, 255, 255, 0.95); --glass-strong: #fff; --glass-soft: rgba(255, 255, 255, 0.85); }
+  :root[data-theme="dark"] { --glass: #22242c; --glass-strong: #1e2028; --glass-soft: #26282f; }
+}
