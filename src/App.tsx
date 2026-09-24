@@ -12,6 +12,7 @@ import { ui, uiStore, useRoute } from "./lib/ui";
 import { CalendarPage } from "./pages/Calendar";
 import { PomodoroPage } from "./pages/Pomodoro";
 import { AlertsPanel } from "./components/Alerts";
+import { FeedbackButton } from "./components/Feedback";
 import { checkDesktopAlerts } from "./lib/alerts";
 import { resumeTimer } from "./lib/pomodoro";
 import { PomodoroMini } from "./components/PomodoroMini";
@@ -159,6 +160,7 @@ function Workspace() {
         <Router />
       </main>
       <MobileNav />
+      <FeedbackButton />
       <PomodoroMini />
       <AlertsPanel />
       <PomodoroPlayer />

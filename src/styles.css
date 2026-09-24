@@ -634,3 +634,34 @@ button.pill { cursor: pointer; }
 
 /* listas longas: o navegador só desenha o que está na tela */
 .gallery-card, .mood-item { content-visibility: auto; contain-intrinsic-size: auto 240px; }
+
+/* ---------- Feedback ---------- */
+.fb-btn {
+  position: fixed; top: 14px; right: 18px; z-index: 35; display: inline-flex; align-items: center; gap: 7px;
+  height: 32px; padding: 0 13px 0 11px; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--bg-elev); color: var(--text-2); font: inherit; font-size: 13px; cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  transition: color 150ms ease, border-color 150ms ease, background-color 150ms ease, transform 150ms var(--ease-spring, ease);
+}
+.fb-btn:hover { color: var(--text); border-color: var(--line-strong); background: var(--bg-hover); }
+/* o cabeçalho das páginas abre espaço para o botão não cobrir nada */
+@media (min-width: 801px) {
+  .main .page-head { padding-right: 116px; }
+  .crv-top .page-head { padding-right: 116px; }
+}
+.fb-btn:active { transform: scale(0.95); }
+.fb-stars { display: flex; align-items: center; gap: 4px; }
+.fb-star { border: 0; background: none; padding: 2px; color: var(--text-3); cursor: pointer; line-height: 0; transition: color 120ms ease, transform 120ms var(--ease-spring, ease); }
+.fb-star.on { color: #f5b301; }
+.fb-star:hover { transform: scale(1.12); }
+.fb-nota { margin-left: 8px; font-size: 13.5px; color: var(--text-3); }
+.fb-list { display: flex; flex-direction: column; gap: 10px; }
+.fb-item { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.fb-item-top { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+.fb-item-stars { color: #f5b301; letter-spacing: 1px; }
+.fb-item p { margin: 6px 0 2px; font-size: 14px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+@media (max-width: 800px) {
+  .fb-btn { top: auto; bottom: calc(80px + env(safe-area-inset-bottom)); right: 12px; height: 36px; padding: 0 12px; }
+  .fb-btn span { display: none; }
+}

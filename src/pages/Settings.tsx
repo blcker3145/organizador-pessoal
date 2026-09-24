@@ -3,12 +3,27 @@ import { useRef, useState } from "react";
 import { AccountSettingsSection } from "../components/AccountSettings";
 import { AiSettingsSection } from "../components/AiSettings";
 import { CommitInput } from "../components/common";
+import { FeedbackList } from "../components/Feedback";
 import { MODULES } from "../components/Sidebar";
 import { clearAll, deleteCategory, deleteProject, insert, patch, remove, replaceState, resetToSeed, setState, STATE_VERSION, useApp } from "../lib/store";
 import type { AppState, TxKind } from "../lib/types";
-import { legacyData, mergeLegacyIntoAccount } from "../lib/sync";
+import { ADMIN_EMAIL } from "../lib/feedback";
+import { legacyData, mergeLegacyIntoAccount, useSession } from "../lib/sync";
 import { ui } from "../lib/ui";
 import { cx, moneyPlain, parseMoney, uid } from "../lib/util";
+
+/** Só quem administra o app vê os feedbacks recebidos. */
+function FeedbackSection() {
+  const { user } = useSession();
+  if ((user?.email || "").toLowerCase() !== ADMIN_EMAIL) return null;
+  return (
+    <section className="settings-section">
+      <h2>Feedback recebido</h2>
+      <p>O que as pessoas enviaram pelo botão no canto da tela.</p>
+      <FeedbackList />
+    </section>
+  );
+}
 
 export function SettingsPage() {
   const state = useApp();
@@ -48,6 +63,8 @@ export function SettingsPage() {
       </div>
 
       <AccountSettingsSection />
+
+      <FeedbackSection />
 
       <section className="settings-section">
         <h2>Perfil</h2>
