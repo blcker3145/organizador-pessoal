@@ -144,6 +144,15 @@ Pronto. No app, abra **Criativos → Compartilhar**, crie o link e mande para qu
 - Os comentários chegam no mesmo painel, com o nome de quem escreveu.
 - Nenhum outro módulo (tarefas, finanças, agenda, notas) sai no link.
 
+## 10. Botão de feedback (opcional)
+
+Coloca um botão "Feedback" no canto superior direito de todas as telas, com nota de 1 a 5 estrelas e um recado.
+
+1. **SQL Editor → New query**, cole tudo de `supabase/migrations/0004_feedback.sql` e clique em **Run**.
+2. Pronto. Cada pessoa vê só o que enviou; quem administra vê tudo em **Configurações → Feedback recebido**.
+
+O e-mail de quem administra está no próprio SQL (função `is_app_admin`) e em `src/lib/feedback.ts`. Se mudar de conta, troque nos dois lugares.
+
 ## Problemas comuns
 
 | Mensagem | O que fazer |
@@ -164,3 +173,4 @@ Pronto. No app, abra **Criativos → Compartilhar**, crie o link e mande para qu
 | "A Google Calendar API não está ativada" | Refaça o passo 8.2.2 |
 | "Falta rodar o SQL do compartilhamento" | Refaça o passo 9.1 |
 | Link compartilhado diz "Não foi possível falar com o servidor" | Publique a função `share` (passo 9.2) com Verify JWT desligado |
+| "Falta rodar o SQL do feedback" | Refaça o passo 10.1 |
