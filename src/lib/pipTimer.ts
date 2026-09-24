@@ -41,7 +41,7 @@ const CSS = `
 const ICON = { play: "▶", pause: "❚❚", skip: "⏭" };
 
 /** Abre a janelinha; devolve false quando o navegador não tem o recurso. */
-export async function openPipTimer(onOpenApp?: () => void): Promise<boolean> {
+export async function openPipTimer(): Promise<boolean> {
   const api = pip();
   if (!api) return false;
   if (api.window) {
@@ -81,12 +81,6 @@ export async function openPipTimer(onOpenApp?: () => void): Promise<boolean> {
 
   playBtn.onclick = () => toggle();
   skipBtn.onclick = () => skip();
-  clock.onclick = () => {
-    window.focus();
-    onOpenApp?.();
-  };
-  clock.style.cursor = "pointer";
-  clock.title = "Abrir o app";
 
   row.append(playBtn, skipBtn);
   doc.body.append(mode, clock, task, row, bar);

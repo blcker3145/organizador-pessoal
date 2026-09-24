@@ -38,7 +38,7 @@ export function PomodoroMini() {
         <button
           className="pomo-mini-ghost"
           onClick={async () => {
-            const ok = await openPipTimer(() => navigate("/pomodoro"));
+            const ok = await openPipTimer();
             if (!ok) ui.toast("A janela flutuante funciona no Chrome e no Edge do computador.");
           }}
           aria-label="Abrir em janela flutuante"
