@@ -4,7 +4,7 @@
  */
 import { Bell, CalendarDays, Check, CheckSquare, Clapperboard, Palette, Wallet, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { ALERT_KIND_LABEL, checkDesktopAlerts, enableDesktopAlerts, markAlertsRead, setAlertSettings, useAlerts, type Alert, type AlertLevel } from "../lib/alerts";
+import { ALERT_KIND_LABEL, checkDesktopAlerts, completeAlert, enableDesktopAlerts, markAlertsRead, setAlertSettings, useAlerts, type Alert, type AlertLevel } from "../lib/alerts";
 import { shortDate } from "../lib/dates";
 import { useApp } from "../lib/store";
 import { navigate, ui, useUI } from "../lib/ui";
@@ -17,6 +17,14 @@ const KIND_ICON = {
   video: <Clapperboard size={15} />,
   bill: <Wallet size={15} />,
   event: <CalendarDays size={15} />,
+};
+
+const DONE_LABEL = {
+  task: "Concluir tarefa",
+  creative: "Marcar entrega como feita",
+  video: "Marcar como publicado",
+  bill: "Marcar como paga",
+  event: "Dispensar lembrete",
 };
 
 const GROUPS: { level: AlertLevel; title: string }[] = [
@@ -101,16 +109,21 @@ function PanelInner() {
             <section key={g.level}>
               <div className={cx("alert-group", g.level)}>{g.title}</div>
               {g.items.map((a) => (
-                <button key={a.id} className={cx("alert-row", newIds.has(a.id) && "new")} onClick={() => open(a)}>
-                  <span className={cx("alert-ico", a.level)}>{KIND_ICON[a.kind]}</span>
-                  <span className="alert-text">
-                    <span className="alert-title ellipsis">{a.title}</span>
-                    <small>
-                      {ALERT_KIND_LABEL[a.kind]} · {a.detail}
-                    </small>
-                  </span>
-                  <span className="alert-date num">{shortDate(a.date)}</span>
-                </button>
+                <div key={a.id} className={cx("alert-row", newIds.has(a.id) && "new")}>
+                  <button className="alert-open" onClick={() => open(a)}>
+                    <span className={cx("alert-ico", a.level)}>{KIND_ICON[a.kind]}</span>
+                    <span className="alert-text">
+                      <span className="alert-title ellipsis">{a.title}</span>
+                      <small>
+                        {ALERT_KIND_LABEL[a.kind]} · {a.detail}
+                      </small>
+                    </span>
+                    <span className="alert-date num">{shortDate(a.date)}</span>
+                  </button>
+                  <button className="alert-done" onClick={() => completeAlert(a)} aria-label={`Concluir: ${a.title}`} title={DONE_LABEL[a.kind]}>
+                    <Check size={15} />
+                  </button>
+                </div>
               ))}
             </section>
           ))}

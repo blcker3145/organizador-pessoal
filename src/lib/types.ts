@@ -335,6 +335,8 @@ export interface AlertSettings {
   days: number;
   read: string[];
   desktop: boolean;
+  /** avisos marcados como concluídos que não têm "feito" próprio (compromissos) */
+  done?: string[];
 }
 
 export interface AppState {

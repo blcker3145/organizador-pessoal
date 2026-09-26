@@ -6,7 +6,8 @@ import { billPaid } from "./finance";
 import { addDays, daysInMonth, diffDays, monthKey, relativeDate, today } from "./dates";
 import { expandLocal } from "./calendar";
 import { useMemo } from "react";
-import { setState, appStore } from "./store";
+import { appStore, createTransaction, patchCreative, patchVideo, remove, setState, setTaskStatus } from "./store";
+import { ui } from "./ui";
 import type { AlertSettings, AppState, ISODate } from "./types";
 import { useApp } from "./store";
 
@@ -24,6 +25,8 @@ export interface Alert {
   date: ISODate;
   time: string;
   path: string;
+  /** id do item de origem (tarefa, criativo, vídeo, conta ou compromisso) */
+  refId: string;
 }
 
 export const ALERT_KIND_LABEL: Record<AlertKind, string> = {
@@ -53,13 +56,14 @@ export function buildAlerts(state: AppState, now = new Date()): Alert[] {
 
   for (const t of state.tasks) {
     if (t.status === "done" || !t.date || !inWindow(t.date)) continue;
-    out.push({ id: `task:${t.id}:${t.date}`, kind: "task", level: levelOf(t.date, d0), title: t.title || "Tarefa sem título", detail: lateText(t.date, d0, true), date: t.date, time: "", path: `/tarefas` });
+    out.push({ refId: t.id, id: `task:${t.id}:${t.date}`, kind: "task", level: levelOf(t.date, d0), title: t.title || "Tarefa sem título", detail: lateText(t.date, d0, true), date: t.date, time: "", path: `/tarefas` });
   }
 
   for (const c of state.creatives) {
     if (!c.dueDate || c.dueDone || !inWindow(c.dueDate)) continue;
     const late = lateText(c.dueDate, d0);
     out.push({
+      refId: c.id,
       id: `creative:${c.id}:${c.dueDate}`,
       kind: "creative",
       level: levelOf(c.dueDate, d0),
@@ -75,6 +79,7 @@ export function buildAlerts(state: AppState, now = new Date()): Alert[] {
     if (!v.publishDate || v.stage === "publicado" || !inWindow(v.publishDate)) continue;
     const late = lateText(v.publishDate, d0);
     out.push({
+      refId: v.id,
       id: `video:${v.id}:${v.publishDate}`,
       kind: "video",
       level: levelOf(v.publishDate, d0),
@@ -92,17 +97,20 @@ export function buildAlerts(state: AppState, now = new Date()): Alert[] {
     const day = String(Math.min(bill.day, daysInMonth(y, m - 1))).padStart(2, "0");
     const date = `${d0.slice(0, 7)}-${day}`;
     if (!inWindow(date) || billPaid(state, bill, monthKey(date))) continue;
-    out.push({ id: `bill:${bill.id}:${date}`, kind: "bill", level: levelOf(date, d0), title: bill.name, detail: lateText(date, d0), date, time: "", path: "/financas" });
+    out.push({ refId: bill.id, id: `bill:${bill.id}:${date}`, kind: "bill", level: levelOf(date, d0), title: bill.name, detail: lateText(date, d0), date, time: "", path: "/financas" });
   }
 
   // compromissos do app (os do Google ficam na Agenda, que é quem avisa por lá)
   const from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const to = new Date(from.getFullYear(), from.getMonth(), from.getDate() + days + 1);
+  const done = new Set(state.alerts.done || []);
   for (const ev of expandLocal(state.events, from, to)) {
     if (!ev.allDay && ev.start < now) continue;
+    if (done.has(`event:${ev.key}`)) continue;
     const date = `${ev.start.getFullYear()}-${String(ev.start.getMonth() + 1).padStart(2, "0")}-${String(ev.start.getDate()).padStart(2, "0")}`;
     const time = ev.allDay ? "" : `${String(ev.start.getHours()).padStart(2, "0")}:${String(ev.start.getMinutes()).padStart(2, "0")}`;
     out.push({
+      refId: ev.id,
       id: `event:${ev.key}`,
       kind: "event",
       level: levelOf(date, d0),
@@ -132,6 +140,42 @@ export function markAlertsRead(ids: string[]) {
     const read = [...new Set([...s.alerts.read, ...ids])].filter((id) => live.has(id));
     return { ...s, alerts: { ...s.alerts, read } };
   });
+}
+
+/**
+ * Conclui o que o aviso lembra: tarefa feita, entrega do criativo feita, vídeo publicado,
+ * conta paga ou compromisso dispensado. Sempre com a opção de desfazer.
+ */
+export function completeAlert(a: Alert) {
+  const s = appStore.get();
+  let undo: () => void = () => undefined;
+  let text = "Concluído";
+  if (a.kind === "task") {
+    const prev = s.tasks.find((t) => t.id === a.refId)?.status || "todo";
+    setTaskStatus(a.refId, "done");
+    undo = () => setTaskStatus(a.refId, prev);
+    text = "Tarefa concluída";
+  } else if (a.kind === "creative") {
+    patchCreative(a.refId, { dueDone: true });
+    undo = () => patchCreative(a.refId, { dueDone: false });
+    text = "Entrega marcada como feita";
+  } else if (a.kind === "video") {
+    const prev = s.videos.find((v) => v.id === a.refId)?.stage || "agendado";
+    patchVideo(a.refId, { stage: "publicado" });
+    undo = () => patchVideo(a.refId, { stage: prev });
+    text = "Vídeo marcado como publicado";
+  } else if (a.kind === "bill") {
+    const bill = s.bills.find((b) => b.id === a.refId);
+    if (!bill) return;
+    const tx = createTransaction({ kind: "saida", amount: bill.amount, description: bill.name, categoryId: bill.categoryId, date: today(), billId: bill.id });
+    undo = () => remove("transactions", tx.id);
+    text = `${bill.name} marcada como paga`;
+  } else {
+    setState((st) => ({ ...st, alerts: { ...st.alerts, done: [...(st.alerts.done || []), a.id].slice(-300) } }));
+    undo = () => setState((st) => ({ ...st, alerts: { ...st.alerts, done: (st.alerts.done || []).filter((x) => x !== a.id) } }));
+    text = "Lembrete dispensado";
+  }
+  ui.toast(text, { label: "Desfazer", run: undo });
 }
 
 export function setAlertSettings(patch: Partial<AlertSettings>) {

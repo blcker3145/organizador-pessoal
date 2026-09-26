@@ -594,6 +594,17 @@ button.pill { cursor: pointer; }
   background: none; color: var(--text); text-align: left; cursor: pointer; position: relative;
 }
 .alert-row:hover { background: var(--bg-hover); }
+/* a linha é o link para o item; o círculo à direita conclui o lembrete */
+.alert-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; padding: 0; }
+.alert-done {
+  flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; cursor: pointer;
+  border: 1.5px solid var(--line-strong); background: transparent; color: transparent;
+  transition: color 150ms ease, border-color 150ms ease, background-color 150ms ease, transform 150ms var(--ease-spring, ease);
+}
+.alert-row:hover .alert-done, .alert-done:focus-visible { color: var(--text-3); }
+.alert-done:hover { color: #fff; background: var(--green); border-color: var(--green); }
+.alert-done:active { transform: scale(0.9); }
+@media (hover: none) { .alert-done { color: var(--text-3); } }
 .alert-row.new::before { content: ""; position: absolute; left: 2px; top: 50%; width: 5px; height: 5px; margin-top: -2px; border-radius: 50%; background: var(--accent); }
 .alert-ico { flex: none; width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: var(--bg-active); color: var(--text-2); }
 .alert-ico.late { background: var(--red-soft); color: var(--red); }
