@@ -49,7 +49,7 @@ function savedTimer(): TimerState | null {
   try {
     const raw = localStorage.getItem(STORAGE);
     if (!raw) return null;
-    const s = { ...DEFAULT_TIMER, ...(JSON.parse(raw) as Partial<TimerState>) };
+    const s = { ...DEFAULT_TIMER, ...(JSON.parse(raw) as Partial<TimerState>), immersive: false };
     const ok = ["idle", "running", "paused"].includes(s.status) && ["focus", "short", "long"].includes(s.mode) && s.duration > 0;
     return ok ? s : null;
   } catch {
@@ -122,7 +122,8 @@ export function start() {
   if (s.status === "running") return;
   const remaining = s.status === "idle" ? minutesOf(s.mode) * 60_000 : s.remaining;
   const duration = s.status === "idle" ? remaining : s.duration;
-  set({ status: "running", endAt: Date.now() + remaining, remaining, duration, immersive: true });
+  // iniciar não abre a tela cheia: ela só abre pelo botão de tela cheia
+  set({ status: "running", endAt: Date.now() + remaining, remaining, duration });
   ensureTicker();
   askNotificationPermission();
   if (s.mode === "focus") startAmbient(prefs().sound, prefs().volume);
