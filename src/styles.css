@@ -582,7 +582,6 @@ button.pill { cursor: pointer; }
   position: fixed; z-index: 47; left: calc(var(--side-w) + 10px); top: 14px; width: min(380px, calc(100vw - 32px));
   max-height: min(620px, calc(100vh - 28px)); display: flex; flex-direction: column;
   background: var(--bg-elev); border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--line);
-  animation: alert-in 220ms var(--ease-ios, ease) backwards;
 }
 @keyframes alert-in { from { opacity: 0; transform: translateY(-6px) scale(0.98); } }
 .alert-head { display: flex; align-items: center; gap: 8px; padding: 12px 10px 12px 16px; border-bottom: 1px solid var(--line); font-size: 15px; }
@@ -622,9 +621,7 @@ button.pill { cursor: pointer; }
   .alert-panel {
     left: 8px; right: 8px; width: auto; top: auto; bottom: 8px; max-height: 76vh;
     padding-bottom: env(safe-area-inset-bottom);
-    animation: alert-up 260ms var(--ease-ios, ease) backwards;
   }
-  @keyframes alert-up { from { opacity: 0; transform: translateY(24px); } }
 }
 
 /* Voltar: botão largo e fácil de acertar, no canto de cima à esquerda */

@@ -3,7 +3,10 @@
  * atrasado, vence hoje ou está chegando.
  */
 import { Bell, CalendarDays, Check, CheckSquare, Clapperboard, Palette, Wallet, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { gsap } from "gsap";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { popIn, popOut } from "../lib/anim";
+import { prefersReducedMotion } from "../lib/motion";
 import { ALERT_KIND_LABEL, checkDesktopAlerts, completeAlert, enableDesktopAlerts, markAlertsRead, setAlertSettings, useAlerts, type Alert, type AlertLevel } from "../lib/alerts";
 import { shortDate } from "../lib/dates";
 import { useApp } from "../lib/store";
@@ -73,8 +76,20 @@ function PanelInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const veilRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
+  useLayoutEffect(() => popIn(panelRef.current, veilRef.current), []);
+  const close = () => popOut(panelRef.current, veilRef.current, ui.closeAlerts);
+
+  // o aviso concluído desliza para fora e a lista fecha o espaço antes de ele sumir
+  const done = (a: Alert, row: HTMLElement) => {
+    if (prefersReducedMotion()) return completeAlert(a);
+    gsap.to(row, { x: 24, opacity: 0, duration: 0.22, ease: "power2.in" });
+    gsap.to(row, { height: 0, paddingTop: 0, paddingBottom: 0, duration: 0.22, delay: 0.16, ease: "power2.inOut", onComplete: () => completeAlert(a) });
+  };
+
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && ui.closeAlerts();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
@@ -88,12 +103,12 @@ function PanelInner() {
 
   return (
     <>
-      <div className="alert-veil" onClick={ui.closeAlerts} />
-      <aside className="alert-panel" role="dialog" aria-label="Avisos de prazo">
+      <div className="alert-veil" ref={veilRef} onClick={close} />
+      <aside className="alert-panel" ref={panelRef} role="dialog" aria-label="Avisos de prazo">
         <header className="alert-head">
           <strong>Avisos</strong>
           <span className="grow" />
-          <button className="icon-btn" onClick={ui.closeAlerts} aria-label="Fechar">
+          <button className="icon-btn" onClick={close} aria-label="Fechar">
             <X size={16} />
           </button>
         </header>
@@ -120,7 +135,7 @@ function PanelInner() {
                     </span>
                     <span className="alert-date num">{shortDate(a.date)}</span>
                   </button>
-                  <button className="alert-done" onClick={() => completeAlert(a)} aria-label={`Concluir: ${a.title}`} title={DONE_LABEL[a.kind]}>
+                  <button className="alert-done" onClick={(e) => done(a, e.currentTarget.parentElement as HTMLElement)} aria-label={`Concluir: ${a.title}`} title={DONE_LABEL[a.kind]}>
                     <Check size={15} />
                   </button>
                 </div>

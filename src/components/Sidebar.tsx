@@ -19,7 +19,8 @@ import {
   Sun,
   Wallet,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
+import { useGlide } from "../lib/anim";
 import { useApp } from "../lib/store";
 import { useSession } from "../lib/sync";
 import { AccountBox } from "./Auth";
@@ -66,8 +67,13 @@ export function Sidebar() {
     })
     .filter(Boolean) as { key: string; label: string; path: string; icon: ReactNode }[];
 
+  const navRef = useRef<HTMLElement>(null);
+  // o destaque do item ativo desliza de um módulo para o outro
+  useGlide(navRef, ".side-item.active", path, "y");
+
   return (
-    <nav className="sidebar" aria-label="Navegação principal">
+    <nav className="sidebar" aria-label="Navegação principal" ref={navRef}>
+      <span data-glide className="side-glide" aria-hidden />
       <div className="side-ws">
         <NeuronLogo size={24} className="brand-logo" />
         <span className="ellipsis grow" title={user?.email || undefined}>

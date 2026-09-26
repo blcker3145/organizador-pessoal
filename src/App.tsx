@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
+import { revealPage } from "./lib/anim";
 import { AssistantDrawer } from "./components/Assistant";
 import { AuthScreen, ErrorScreen, LoadingScreen, NewPasswordScreen, OnboardingScreen, SetupMissingScreen } from "./components/Auth";
 import { supabaseConfigured } from "./lib/supabase";
@@ -141,10 +142,13 @@ export function App() {
 function Workspace() {
   useShortcuts();
   const { path } = useRoute();
+  const mainRef = useRef<HTMLElement>(null);
   useEffect(() => {
     document.querySelector(".main")?.scrollTo(0, 0);
     ui.closeTask();
   }, [path]);
+  // ao trocar de página, os blocos entram em sequência
+  useLayoutEffect(() => revealPage(mainRef.current), [path]);
   // o cronômetro volta de onde parou, agora que as preferências já chegaram
   useEffect(() => resumeTimer(), []);
   // avisos de prazo no computador, de minuto em minuto
@@ -156,7 +160,7 @@ function Workspace() {
   return (
     <div className="app">
       <Sidebar />
-      <main className="main">
+      <main className="main" ref={mainRef}>
         <Router />
       </main>
       <MobileNav />

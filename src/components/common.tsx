@@ -1,6 +1,7 @@
 import { Check, X } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import type { Priority, TaskStatus, VideoStage } from "../lib/types";
+import { popIn, popOut, useGlide } from "../lib/anim";
 import { cx } from "../lib/util";
 
 /** Interruptor de ligar/desligar com rótulo. */
@@ -64,14 +65,24 @@ export function Modal({
   width?: number;
   className?: string;
 }) {
-  useEscape(onClose);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const closing = useRef(false);
+  useLayoutEffect(() => popIn(panelRef.current, overlayRef.current), []);
+  // fechar pelo X, pelo fundo ou pelo Esc: anima a saída antes de sumir
+  const close = () => {
+    if (closing.current) return;
+    closing.current = true;
+    popOut(panelRef.current, overlayRef.current, onClose);
+  };
+  useEscape(close);
   return (
-    <div className="overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className={cx("modal", className)} role="dialog" aria-modal="true" style={width ? { maxWidth: width } : undefined}>
+    <div className="overlay" ref={overlayRef} onMouseDown={(e) => e.target === e.currentTarget && close()}>
+      <div ref={panelRef} className={cx("modal", className)} role="dialog" aria-modal="true" style={width ? { maxWidth: width } : undefined}>
         {title && (
           <div className="modal-head">
             <span>{title}</span>
-            <button className="icon-btn" onClick={onClose} aria-label="Fechar">
+            <button className="icon-btn" onClick={close} aria-label="Fechar">
               <X size={16} />
             </button>
           </div>
@@ -117,8 +128,11 @@ export function Tabs<T extends string>({
   onChange: (v: T) => void;
   items: { value: T; label: ReactNode }[];
 }) {
+  const boxRef = useRef<HTMLDivElement>(null);
+  useGlide(boxRef, ".tab.on", value, "x");
   return (
-    <div className="tabs" role="tablist">
+    <div className="tabs" role="tablist" ref={boxRef}>
+      <span data-glide className="tabs-glide" aria-hidden />
       {items.map((it) => (
         <button
           key={it.value}

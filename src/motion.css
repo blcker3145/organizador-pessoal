@@ -85,13 +85,9 @@
 @keyframes toast-in { from { opacity: 0; transform: translateY(12px) scale(0.96); } to { opacity: 1; transform: none; } }
 @keyframes bubble-in { from { opacity: 0; transform: translateY(6px) scale(0.98); } to { opacity: 1; transform: none; } }
 
-/* troca de página: conteúdo sobe suavemente */
-.main > .page, .main > div > .page { animation: rise-in 360ms var(--ease-out) backwards; }
-.crv-body { animation: fade-in 260ms ease backwards; }
+/* troca de página e janelas: animadas pelo GSAP (src/lib/anim.ts) */
 
 /* janelas */
-.overlay { animation: fade-in 200ms ease backwards; backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
-.overlay > .modal { animation: pop-in 320ms var(--ease-ios) backwards; }
 .drawer-overlay { animation: fade-in 200ms ease backwards; }
 .drawer { animation: drawer-in 380ms var(--ease-ios) backwards; }
 .pop, .ai-popover, .ee-palette { animation: pop-in 200ms var(--ease-out) backwards; transform-origin: top left; }
