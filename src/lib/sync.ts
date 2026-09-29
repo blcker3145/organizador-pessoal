@@ -271,7 +271,7 @@ export function startAuth() {
 
 function translateAuthError(message: string): string {
   if (/invalid login credentials/i.test(message)) return "E-mail ou senha incorretos.";
-  if (/email not confirmed/i.test(message)) return "Confirme seu e-mail pelo link que enviamos antes de entrar.";
+  if (/email not confirmed/i.test(message)) return "Falta confirmar seu e-mail. Procure a mensagem na caixa de entrada, no Spam ou em Promoções, ou peça um novo link abaixo.";
   if (/already registered|already exists/i.test(message)) return "Já existe uma conta com esse e-mail. Entre ou use Esqueci minha senha.";
   if (/password should be at least|weak password/i.test(message)) return "A senha precisa ter pelo menos 6 caracteres.";
   if (/rate limit|too many/i.test(message)) return "Muitas tentativas seguidas. Espere alguns minutos e tente de novo.";
@@ -294,6 +294,12 @@ export async function signUp(name: string, email: string, password: string): Pro
   });
   if (error) return { error: translateAuthError(error.message), needsConfirmation: false };
   return { error: null, needsConfirmation: !data.session };
+}
+
+/** Envia de novo o e-mail de confirmação de cadastro (o link anterior vale 24 horas). */
+export async function resendConfirmation(email: string): Promise<string | null> {
+  const { error } = await supabase!.auth.resend({ type: "signup", email: email.trim(), options: { emailRedirectTo: appUrl() } });
+  return error ? translateAuthError(error.message) : null;
 }
 
 export async function sendPasswordReset(email: string): Promise<string | null> {

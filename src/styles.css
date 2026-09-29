@@ -673,3 +673,6 @@ button.pill { cursor: pointer; }
   .fb-btn { top: auto; bottom: calc(80px + env(safe-area-inset-bottom)); right: 12px; height: 36px; padding: 0 12px; }
   .fb-btn span { display: none; }
 }
+
+/* reenviar o e-mail de confirmação do cadastro */
+.auth-resend { width: 100%; justify-content: center; }

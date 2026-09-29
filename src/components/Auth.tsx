@@ -1,8 +1,8 @@
 import { NeuronLogo } from "./Logo";
 import { Cloud, CloudOff, Loader2, LogOut } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { cx } from "../lib/util";
-import { finishOnboarding, sendPasswordReset, signIn, signOut, signUp, updatePassword, useSession } from "../lib/sync";
+import { finishOnboarding, resendConfirmation, sendPasswordReset, signIn, signOut, signUp, updatePassword, useSession } from "../lib/sync";
 
 function AuthCard({ title, subtitle, children }: { title: string; subtitle?: ReactNode; children: ReactNode }) {
   return (
@@ -31,6 +31,28 @@ export function AuthScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
+  // cadastro esperando confirmação: mostra o botão de reenviar o e-mail
+  const [pending, setPending] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  useEffect(() => {
+    if (!cooldown) return;
+    const id = window.setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => window.clearTimeout(id);
+  }, [cooldown]);
+
+  const resend = async () => {
+    if (!email.trim() || cooldown) return;
+    setBusy(true);
+    const err = await resendConfirmation(email);
+    setBusy(false);
+    if (err) {
+      setError(err);
+      return;
+    }
+    setError("");
+    setInfo(`Enviamos um novo link para ${email.trim()}. Pode levar alguns minutos; confira também o Spam e a aba Promoções.`);
+    setCooldown(60);
+  };
 
   const go = (m: Mode) => {
     setMode(m);
@@ -48,12 +70,15 @@ export function AuthScreen() {
       if (mode === "entrar") {
         const err = await signIn(email, password);
         if (err) setError(err);
+        setPending(!!err && /confirmar seu e-mail/i.test(err));
       } else if (mode === "criar") {
         const { error: err, needsConfirmation } = await signUp(name, email, password);
         if (err) setError(err);
         else if (needsConfirmation) {
-          setInfo(`Enviamos um link de confirmação para ${email.trim()}. Abra o e-mail neste mesmo navegador para ativar a conta.`);
+          setInfo(`Enviamos um link de confirmação para ${email.trim()}. Se não aparecer em alguns minutos, confira o Spam e a aba Promoções. Depois de confirmar, é só entrar com seu e-mail e senha.`);
           setMode("entrar");
+          setPending(true);
+          setCooldown(60);
         }
       } else {
         const err = await sendPasswordReset(email);
@@ -106,6 +131,11 @@ export function AuthScreen() {
         )}
         {error && <div className="ai-error">{error}</div>}
         {info && <div className="auth-info">{info}</div>}
+        {pending && mode === "entrar" && (
+          <button type="button" className="btn auth-resend" onClick={resend} disabled={busy || !!cooldown || !email.trim()}>
+            {cooldown ? `Reenviar e-mail de confirmação (${cooldown}s)` : "Reenviar e-mail de confirmação"}
+          </button>
+        )}
         <button type="submit" className="btn primary auth-submit" disabled={busy}>
           {busy && <Loader2 size={15} className="spin" />}
           {mode === "entrar" ? "Entrar" : mode === "criar" ? "Criar conta" : "Enviar link"}
