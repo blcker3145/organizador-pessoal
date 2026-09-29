@@ -45,7 +45,7 @@ import {
 } from "../lib/store";
 import type { Block, Creative, CreativeImage, CreativeStage } from "../lib/types";
 import { navigate, ui } from "../lib/ui";
-import { cx, uid } from "../lib/util";
+import { cx, textBlock, uid } from "../lib/util";
 
 export function CreativePage({ id }: { id: string }) {
   const state = useApp();
@@ -317,7 +317,7 @@ function Description({ creative }: { creative: Creative }) {
   const empty = !creative.briefing.some((b) => b.text.trim() || b.type === "divider");
 
   const open = () => {
-    setDraft(creative.briefing);
+    setDraft(creative.briefing.length ? creative.briefing : [textBlock()]);
     setEditing(true);
   };
   const save = () => {
@@ -327,7 +327,14 @@ function Description({ creative }: { creative: Creative }) {
 
   // ao abrir, o cursor já fica no texto
   useEffect(() => {
-    if (editing) boxRef.current?.querySelector<HTMLTextAreaElement>(".blk-text")?.focus();
+    if (!editing) return;
+    // cursor no fim do texto, para continuar escrevendo
+    const campos = boxRef.current?.querySelectorAll<HTMLTextAreaElement>(".blk-text");
+    const ultimo = campos?.[campos.length - 1];
+    if (ultimo) {
+      ultimo.focus();
+      ultimo.setSelectionRange(ultimo.value.length, ultimo.value.length);
+    }
   }, [editing]);
 
   if (!editing) {

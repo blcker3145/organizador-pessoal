@@ -111,7 +111,9 @@ export function BlockEditor({
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const [aiPanel, setAiPanel] = useState<{ key: number; anchorId: string; scopeId: string | null; scope: AiScope; instruction: string; autoRun: boolean } | null>(null);
 
-  const list = blocks.length ? blocks : [textBlock()];
+  // texto vazio: um parágrafo em branco estável (se mudasse a cada desenho, o campo perderia o foco)
+  const emptyBlock = useRef(textBlock());
+  const list = blocks.length ? blocks : [emptyBlock.current];
 
   /* ---------- Ditado por voz ---------- */
   // onde o texto falado entra: último bloco e posição do cursor
