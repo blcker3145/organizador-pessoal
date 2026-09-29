@@ -24,9 +24,11 @@ Isso cria a tabela de dados de cada conta, as regras para cada pessoa ver só os
 1. Abra **Authentication → URL Configuration**.
 2. Em **Site URL**, coloque:
    `https://blcker3145.github.io/organizador-pessoal/`
-3. Em **Redirect URLs**, clique em **Add URL** e adicione as duas:
-   - `https://blcker3145.github.io/organizador-pessoal/`
-   - `http://localhost:5173/`
+3. Em **Redirect URLs**, clique em **Add URL** e adicione as duas (com `**` no fim):
+   - `https://blcker3145.github.io/organizador-pessoal/**`
+   - `http://localhost:5173/**`
+
+   Sem isso, o Supabase ignora o endereço pedido pelo app e manda os links de e-mail para o Site URL.
 4. Clique em **Save**.
 
 Em **Authentication → Sign In / Providers → Email**, o login por e-mail já vem ligado.
@@ -163,7 +165,7 @@ O e-mail de quem administra está no próprio SQL (função `is_app_admin`) e em
 | "adicione o segredo GEMINI_API_KEY ou OPENAI_API_KEY" | Refaça o passo 5 |
 | "A cota gratuita do Gemini acabou" | Espere um minuto; se continuar, a cota diária renova no dia seguinte |
 | "A conta da OpenAI está sem créditos" | Adicione saldo em platform.openai.com → Billing |
-| Link do e-mail volta para a página errada | Confira as URLs do passo 3 |
+| Link do e-mail volta para a página errada ou para `localhost` | O Site URL e as Redirect URLs do passo 3 precisam apontar para o site publicado |
 | "Esse link expirou ou já foi usado" | Peça um novo e abra no mesmo navegador em que pediu |
 | "A integração ainda não foi configurada no servidor" (Agenda) | Faltam os segredos do passo 8.3 |
 | "A função do Google Agenda ainda não foi publicada" | Refaça o passo 8.1 |

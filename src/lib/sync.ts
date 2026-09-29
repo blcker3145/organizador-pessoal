@@ -212,18 +212,21 @@ async function refreshFromCloud() {
 
 /* ---------------- Autenticação ---------------- */
 
-function cleanAuthParams() {
+function cleanAuthParams(signedIn: boolean) {
   const params = new URLSearchParams(window.location.search);
   const description = params.get("error_description");
   if (description) ui.toast(/expired|invalid/i.test(description) ? "Esse link expirou ou já foi usado. Peça um novo." : description);
-  if (params.has("code") || params.has("error") || description) {
+  // link de confirmação aberto em outro aparelho: o e-mail já foi confirmado, só falta entrar
+  else if (params.has("confirmado") && !signedIn) ui.toast("E-mail confirmado! Agora é só entrar com seu e-mail e senha.");
+  else if (params.has("confirmado")) ui.toast("E-mail confirmado. Bem-vindo!");
+  if (params.has("code") || params.has("error") || params.has("confirmado") || description) {
     window.history.replaceState(null, "", `${window.location.pathname}${window.location.hash}`);
   }
 }
 
 function handleSession(event: string, session: Session | null) {
   if (event === "PASSWORD_RECOVERY") {
-    cleanAuthParams();
+    cleanAuthParams(true);
     setSession({ phase: "recovery", user: session?.user ?? null });
     return;
   }
@@ -234,10 +237,10 @@ function handleSession(event: string, session: Session | null) {
     dirty = false;
     applyState(emptyState());
     setSession({ phase: "signedOut", user: null, saveStatus: "saved" });
-    cleanAuthParams();
+    cleanAuthParams(false);
     return;
   }
-  cleanAuthParams();
+  cleanAuthParams(true);
   if (session.user.id !== currentUserId) openAccount(session.user);
   else setSession({ user: session.user });
 }
@@ -290,7 +293,7 @@ export async function signUp(name: string, email: string, password: string): Pro
   const { data, error } = await supabase!.auth.signUp({
     email: email.trim(),
     password,
-    options: { emailRedirectTo: appUrl(), data: { name: name.trim() } },
+    options: { emailRedirectTo: `${appUrl()}?confirmado=1`, data: { name: name.trim() } },
   });
   if (error) return { error: translateAuthError(error.message), needsConfirmation: false };
   return { error: null, needsConfirmation: !data.session };
@@ -298,7 +301,7 @@ export async function signUp(name: string, email: string, password: string): Pro
 
 /** Envia de novo o e-mail de confirmação de cadastro (o link anterior vale 24 horas). */
 export async function resendConfirmation(email: string): Promise<string | null> {
-  const { error } = await supabase!.auth.resend({ type: "signup", email: email.trim(), options: { emailRedirectTo: appUrl() } });
+  const { error } = await supabase!.auth.resend({ type: "signup", email: email.trim(), options: { emailRedirectTo: `${appUrl()}?confirmado=1` } });
   return error ? translateAuthError(error.message) : null;
 }
 
