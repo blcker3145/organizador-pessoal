@@ -1,11 +1,11 @@
 import { ChevronRight, Search, Settings, Sparkles } from "lucide-react";
 import { AlertsBell } from "../components/Alerts";
-import { MODULES } from "../components/Sidebar";
+import { useModules } from "../components/Sidebar";
 import { AccountBox } from "../components/Auth";
 import { ui } from "../lib/ui";
 
 export function MorePage() {
-  const extra = MODULES.filter((m) => !["/hoje", "/tarefas", "/ideias"].includes(m.path));
+  const extra = useModules().filter((m) => !["/hoje", "/tarefas", "/ideias"].includes(m.path));
   return (
     <div className="page">
       <div className="page-head">

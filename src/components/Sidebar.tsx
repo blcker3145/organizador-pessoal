@@ -12,6 +12,7 @@ import {
   Palette,
   MoreHorizontal,
   Plus,
+  Radar,
   Repeat2,
   Search,
   Settings,
@@ -21,6 +22,7 @@ import {
 } from "lucide-react";
 import { useRef, type ReactNode } from "react";
 import { useGlide } from "../lib/anim";
+import { canProspect } from "../lib/prospect";
 import { useApp } from "../lib/store";
 import { useSession } from "../lib/sync";
 import { AccountBox } from "./Auth";
@@ -39,6 +41,14 @@ export const MODULES: { path: string; label: string; icon: ReactNode }[] = [
   { path: "/rotina", label: "Rotina", icon: <Repeat2 size={16} /> },
   { path: "/financas", label: "Finanças", icon: <Wallet size={16} /> },
 ];
+
+/** Prospecção: só aparece para a conta de quem administra o app. */
+export const PROSPECT_MODULE = { path: "/prospeccao", label: "Prospecção", icon: <Radar size={16} /> };
+
+export function useModules() {
+  const { user } = useSession();
+  return canProspect(user?.email) ? [...MODULES, PROSPECT_MODULE] : MODULES;
+}
 
 function isActive(current: string, path: string) {
   return current === path || current.startsWith(path + "/");
@@ -67,6 +77,7 @@ export function Sidebar() {
     })
     .filter(Boolean) as { key: string; label: string; path: string; icon: ReactNode }[];
 
+  const modules = useModules();
   const navRef = useRef<HTMLElement>(null);
   // o destaque do item ativo desliza de um módulo para o outro
   useGlide(navRef, ".side-item.active", path, "y");
@@ -91,7 +102,7 @@ export function Sidebar() {
         <Sparkles size={16} className="ai-sparkle" /> <span className="ai-text">Assistente IA</span> <kbd>Ctrl J</kbd>
       </button>
       <div className="side-group">Módulos</div>
-      {MODULES.map((m) => (
+      {modules.map((m) => (
         <a key={m.path} href={`#${m.path}`} className={cx("side-item", isActive(path, m.path) && "active")}>
           {m.icon}
           {m.label}
@@ -124,7 +135,7 @@ export function MobileNav() {
     { path: "/hoje", label: "Hoje", icon: <Home size={20} /> },
     { path: "/tarefas", label: "Tarefas", icon: <CheckSquare size={20} /> },
   ];
-  const inMore = ["/agenda", "/pomodoro", "/videos", "/criativos", "/habitos", "/rotina", "/financas", "/config", "/mais"].some((p) => isActive(path, p));
+  const inMore = ["/agenda", "/pomodoro", "/videos", "/criativos", "/habitos", "/rotina", "/financas", "/prospeccao", "/config", "/mais"].some((p) => isActive(path, p));
   return (
     <nav className="mobile-nav" aria-label="Navegação">
       {items.map((it) => (
