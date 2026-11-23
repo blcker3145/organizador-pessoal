@@ -8,7 +8,6 @@ import "./motion.css";
 import "./pomodoro.css";
 import "./share.css";
 import "./glass.css";
-import "./prospect.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

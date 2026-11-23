@@ -155,19 +155,6 @@ Coloca um botão "Feedback" no canto superior direito de todas as telas, com not
 
 O e-mail de quem administra está no próprio SQL (função `is_app_admin`) e em `src/lib/feedback.ts`. Se mudar de conta, troque nos dois lugares.
 
-## 11. Prospecção (só para a conta de quem administra)
-
-A aba **Prospecção** busca empresas sem site no Google e só aparece para a conta de quem administra (a mesma do feedback). Precisa do passo 10 feito antes.
-
-1. **Tabelas:** no **SQL Editor**, cole e rode `supabase/migrations/0005_prospeccao.sql`.
-2. **Função:** em **Edge Functions → Deploy a new function → Via Editor**, use o nome `prospect`, cole `supabase/functions/prospect/index.ts` e publique com **Verify JWT** ligado.
-3. **Chave do Google:**
-   1. Abra https://console.cloud.google.com, crie um projeto e ligue o faturamento (o Google pede cartão, mas dá uma cota grátis por mês).
-   2. Em **APIs e serviços → Biblioteca**, ative a **Places API (New)**.
-   3. Em **Credenciais → Criar credenciais → Chave de API**. Em *Restrições de API*, deixe só a Places API (New).
-   4. No Supabase, em **Edge Functions → Secrets**, salve como `GOOGLE_PLACES_API_KEY`.
-4. Opcional: `PROSPECT_MAX_PAGES` (1 a 3) define quantas páginas de 20 empresas cada busca traz. Cada página conta como uma chamada na cota do Google.
-
 ## Problemas comuns
 
 | Mensagem | O que fazer |

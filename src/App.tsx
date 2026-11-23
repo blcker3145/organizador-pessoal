@@ -31,8 +31,6 @@ import { TasksPage } from "./pages/Tasks";
 import { TodayPage } from "./pages/Today";
 import { VideoPage } from "./pages/VideoPage";
 import { VideosPage } from "./pages/Videos";
-import { ProspectPage } from "./pages/Prospect";
-import { canProspect } from "./lib/prospect";
 
 function useTheme() {
   const theme = useApp().settings.theme;
@@ -81,10 +79,7 @@ function useShortcuts() {
 function Router() {
   const { parts } = useRoute();
   const [section, id] = parts;
-  const { user } = useSession();
   switch (section) {
-    case "prospeccao":
-      return canProspect(user?.email) ? <ProspectPage /> : <TodayPage />;
     case "agenda":
       return <CalendarPage />;
     case "pomodoro":

@@ -8,7 +8,7 @@ import { createNote, createTask, useApp } from "../lib/store";
 import { navigate, ui, useUI } from "../lib/ui";
 import { blocksToText, cx, money, normalize } from "../lib/util";
 import { Modal, ProgressBar, stageInfo } from "./common";
-import { useModules } from "./Sidebar";
+import { MODULES } from "./Sidebar";
 
 /* ---------------- Busca (Ctrl K) ---------------- */
 
@@ -29,7 +29,6 @@ export function CommandPalette() {
 
 function PaletteInner() {
   const state = useApp();
-  const modules = useModules();
   const [q, setQ] = useState("");
   const [index, setIndex] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
@@ -41,7 +40,7 @@ function PaletteInner() {
     const cap = (arr: PaletteItem[], n: number) => arr.slice(0, nq ? n : Math.min(n, 3));
 
     out.push(
-      ...modules.filter((m) => match(m.label))
+      ...MODULES.filter((m) => match(m.label))
         .slice(0, nq ? 7 : 7)
         .map((m) => ({ key: `m${m.path}`, group: "Ir para", label: m.label, icon: m.icon, run: () => navigate(m.path) })),
     );
@@ -140,7 +139,7 @@ function PaletteInner() {
       { key: "capture", group: "Ações", label: "Abrir captura rápida com esse texto", icon: <ArrowRight size={16} />, run: () => ui.openCapture(title) },
     );
     return out;
-  }, [q, state, modules]);
+  }, [q, state]);
 
   useEffect(() => setIndex(0), [q]);
   useEffect(() => {
